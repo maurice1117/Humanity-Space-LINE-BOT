@@ -5,4 +5,5 @@
 
 ### 啟動指令:
 - pip install -r requirements.txt
+- pip install --upgrade pip
 - gunicorn app:app
