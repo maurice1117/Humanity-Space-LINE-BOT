@@ -35,3 +35,8 @@ def handle_message(event):
         event.reply_token,
         TextSendMessage(text=event.message.text)
     )
+
+# 定時ping的功能，避免render進入休眠狀態
+@app.route("/ping", methods=["GET"])
+def ping():
+    return "pong", 200
