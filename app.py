@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 
 import os
 
+from text_handler import handle_text
+
 load_dotenv()
 
 app = Flask(__name__)
@@ -35,6 +37,8 @@ def handle_message(event):
         event.reply_token,
         TextSendMessage(text=event.message.text)
     )
+
+handler.add(MessageEvent, message=TextMessage)(handle_text)
 
 # 定時ping的功能，避免render進入休眠狀態
 @app.route("/ping", methods=["GET"])
