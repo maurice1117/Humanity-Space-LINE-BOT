@@ -4,6 +4,7 @@ import os
 
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 
+# 不用flex message確認預約了
 def handle_text(event):
     user_text = event.message.text
 
