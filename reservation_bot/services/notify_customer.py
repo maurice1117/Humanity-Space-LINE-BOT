@@ -1,7 +1,8 @@
 from linebot import LineBotApi
 from linebot.models import TextSendMessage
+from dotenv import load_dotenv
 import os
-
+load_dotenv()
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 
 def notify_user_reservation_confirmed(user_id, reservation):

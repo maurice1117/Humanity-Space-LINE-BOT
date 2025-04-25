@@ -1,0 +1,14 @@
+flask
+line-bot-sdk
+psycopg2-binary
+python-dotenv
+
+# Whisper 語音轉文字
+git+https://github.com/openai/whisper.git
+ffmpeg-python
+
+
+# Together.ai API 模型支援
+openai
+
+# https://humanity-space-line-bot.onrender.com/callback
