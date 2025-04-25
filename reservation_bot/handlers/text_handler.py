@@ -14,8 +14,8 @@ def handle_text(event):
     if is_reservation_request(text):
         reservation = extract_reservation_info(text)
         reservation['user_id'] = user_id
-        save_draft(user_id, reservation)
-        notify_admin_reservation(reservation)
+        save_draft(user_id, reservation) # 到這步的邏輯都一樣
+        notify_admin_reservation(reservation) # 通知老闆後的處理看一下
         line_bot_api.reply_message(event.reply_token, text_reply("已收到您的預約申請，我們會盡快審核。"))
     else:
         line_bot_api.reply_message(event.reply_token, text_reply("訊息已收到，我們會盡快處理。"))
