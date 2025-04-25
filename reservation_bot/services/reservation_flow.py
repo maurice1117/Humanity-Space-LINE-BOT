@@ -1,7 +1,16 @@
 import json
 from services.notify_customer import notify_user_reservation_confirmed
 
+DEFAULT_KEYS = ["name", "tel", "date", "memo", "start_time", "end_time", "status", "number_of_people", "device", "purpose"]
+
+def pad_reservation(data):
+    for key in DEFAULT_KEYS:
+        if key not in data:
+            data[key] = ""
+    return data
+    
 def save_reservation_to_json(data: dict, path="data/reservation.json"):
+    data = pad_reservation(data)  # 寫入前補齊欄位
     with open(path, "a", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False)
         f.write("\n")
