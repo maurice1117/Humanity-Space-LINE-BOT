@@ -21,16 +21,16 @@ reservation_bot/
 │   ├── unified_router.py            # 註冊 Text、Audio、Admin 訊息
 │   ├── text_handler.py              # 處理使用者文字訊息
 │   ├── audio_handler.py             # 處理語音訊息 → Whisper 轉文字
-│   └── admin_reply_handler.py       # 管理者的審核、修改、刪除與語音備註
+│   └── host_reply_handler.py       # 管理者的審核、修改、刪除與語音備註
 ├── services/                         # 處理邏輯功能模組
 │   ├── whisper_service.py           # Whisper 語音轉文字工具
 │   ├── llm_service.py               # 判斷是否為預約 + 抽取資料
-│   ├── notify_admin.py              # 推播草稿通知給管理者
+│   ├── notify_host.py              # 推播草稿通知給管理者
 │   ├── notify_customer.py           # 推播「預約已確認」通知給使用者
 │   ├── reservation_flow.py          # 格式化資料 + 儲存 JSON + 通知
 │   ├── reservation_draft.py         # 暫存草稿（記憶體內 dict）
 │   ├── response_builder.py          # 產生文字或 Flex 訊息格式
-│   └── admin_control.py             # 驗證是否為管理者帳號
+│   └── host_control.py             # 驗證是否為管理者帳號
 ├── data/
 │   ├── reservation.json             # 所有預約紀錄會寫入這個 JSONL 檔
 │   └── RAG_enhancer.py              # 加入 RAG 處理
@@ -49,13 +49,14 @@ python app.py
 
 **測試中可使用 [ngrok](https://ngrok.com/) 暴露本機 port 以對接 LINE Webhook**
 
+開一個新的terminal:
 ```
 ngrok http 5000
 ```
 
 ---
 
-## ☁️ 雲端部署（Render）
+## ☁️ 雲端部署（Render）: 僅正式部署用，測試時不需要
 
 1. **建立 Web Service，連接 Git 分支**
 2. **設定環境變數（如上）**
