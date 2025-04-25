@@ -1,4 +1,4 @@
-from reservation_flow import pad_reservation  # 保持欄位統一
+from .reservation_flow import pad_reservation  # 保持欄位統一
 
 drafts = {}
 

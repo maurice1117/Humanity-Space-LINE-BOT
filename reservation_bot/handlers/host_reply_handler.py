@@ -3,6 +3,7 @@
 from services.host_control import is_host
 from services.reservation_draft import confirm_draft, update_draft, delete_draft
 from services.reservation_flow import finalize_and_save
+from services.llm_service import is_reservation_request
 from services.whisper_service import download_audio, transcribe_audio
 from services.response_builder import text_reply
 from linebot import LineBotApi
@@ -12,7 +13,7 @@ import os
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 host_id = os.getenv("HOST_LINE_ID")
 
-def handle_admin_reply(event):
+def handle_host_reply(event):
     user_id = event.source.user_id
     print(f"🔐 收到來自 {user_id} 的訊息，內容: {event.message.text}")
     if is_host(user_id):
@@ -30,22 +31,23 @@ def handle_admin_reply(event):
         text = event.message.text.strip()
         print(f"🔐 收到來自 {user_id} 的文字訊息，內容: {text}")
         line_bot_api.push_message(host_id, text_reply(f"🔔 使用者 {user_id} 傳送文字訊息：「{text}」"))
-        if text.startswith("確認新增"):
-            reservation = confirm_draft(user_id)
-            finalize_and_save(user_id, reservation)
-            line_bot_api.reply_message(event.reply_token, text_reply("✅ 已新增預約並通知使用者"))
-            
-        elif text.startswith("修改"):
-            _, key, value = text.split(" ", 2)
-            update_draft(user_id, **{key: value})
-            line_bot_api.reply_message(event.reply_token, text_reply(f"✏️ 已更新 {key} 為 {value}"))
-            line_bot_api.push_message(host_id, text_reply(f"🔔 使用者 {user_id} 修改 {key} 為 {value}"))
+        if is_reservation_request(text):
+            line_bot_api.reply_message(event.reply_token, text_reply("請輸入預約資訊或操作指令，例如：\n1. 確認新增\n2. 修改\n3. 刪除\n4. 取消"))
+            if text.startswith("確認新增"):
+                reservation = confirm_draft(user_id)
+                finalize_and_save(user_id, reservation)
+                line_bot_api.reply_message(event.reply_token, text_reply("✅ 已新增預約並通知使用者"))
+                
+            elif text.startswith("修改"):
+                _, key, value = text.split(" ", 2)
+                update_draft(user_id, **{key: value})
+                line_bot_api.reply_message(event.reply_token, text_reply(f"✏️ 已更新 {key} 為 {value}"))
+                line_bot_api.push_message(host_id, text_reply(f"🔔 使用者 {user_id} 修改 {key} 為 {value}"))
 
-        elif text.startswith("刪除"):
-            delete_draft(user_id)
-            line_bot_api.reply_message(event.reply_token, text_reply("🗑 草稿已刪除"))
-            line_bot_api.push_message(host_id, text_reply(f"🔔 使用者 {user_id} 刪除預約草稿"))
-            
-        else:
-            line_bot_api.reply_message(event.reply_token, text_reply("無法辨識操作"))
-        
+            elif text.startswith("刪除"):
+                delete_draft(user_id)
+                line_bot_api.reply_message(event.reply_token, text_reply("🗑 草稿已刪除"))
+                line_bot_api.push_message(host_id, text_reply(f"🔔 使用者 {user_id} 刪除預約草稿"))
+                
+            else:
+                line_bot_api.reply_message(event.reply_token, text_reply("無法辨識操作"))

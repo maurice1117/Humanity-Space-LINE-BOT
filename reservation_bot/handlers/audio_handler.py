@@ -1,6 +1,6 @@
 from services.whisper_service import download_audio, transcribe_audio
 from services.llm_service import is_reservation_request, extract_reservation_info
-from services.notify_admin import notify_admin_reservation
+from services.notify_host import notify_host_reservation
 from services.reservation_draft import save_draft
 from services.response_builder import text_reply
 from linebot import LineBotApi
@@ -17,7 +17,7 @@ def handle_audio(event):
         reservation = extract_reservation_info(text)
         reservation["user_id"] = user_id
         save_draft(user_id, reservation)
-        notify_admin_reservation(reservation)
+        notify_host_reservation(reservation)
         line_bot_api.reply_message(event.reply_token, text_reply("語音已收到，我們將進行審核處理"))
     else:
         line_bot_api.reply_message(event.reply_token, text_reply("我們已收到您的語音訊息"))
