@@ -1,8 +1,16 @@
 from linebot.models import TextSendMessage, FlexSendMessage
 from linebot import LineBotApi
+# from linebot.v3.messaging import (
+#     Configuration,
+#     )
 import os
+from dotenv import load_dotenv
 
-line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
+from datepicker import send_datetime_picker
+
+load_dotenv()  ## must have
+# configuration = Configuration(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
+line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN") )
 
 def handle_text(event):
     user_text = event.message.text
@@ -73,6 +81,8 @@ def handle_text(event):
 
         line_bot_api.reply_message(event.reply_token, message)
 
+    elif user_text == "時間表":
+        send_datetime_picker(event)
     else:
         line_bot_api.reply_message(
             event.reply_token,
