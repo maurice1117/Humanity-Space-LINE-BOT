@@ -1,74 +1,110 @@
-# 這個檔案專門用來處理老闆在收到預約相關訊息後加memo的部分。
-# 老闆可以修改預約資訊或是刪除預約草稿，然後可以加上memo。原則上老闆用語音或文字都可以。
+# host_reply_handler.py
 from services.host_control import is_host
 from services.reservation_draft import confirm_draft, update_draft, delete_draft
 from services.reservation_flow import finalize_and_save
-from services.llm_service import is_reservation_request
-from services.whisper_service import download_audio, transcribe_audio
+from handlers.audio_handler import handle_audio
+from handlers.text_handler import handle_text
+from services.reservation_draft import delete_draft
+from services.reservation_draft import confirm_draft
+from services.reservation_draft import update_draft
 from services.response_builder import text_reply
 from linebot import LineBotApi
 from linebot.models import AudioMessage, TextMessage
+from linebot.exceptions import LineBotApiError
 import os
-
-from dotenv import load_dotenv
-load_dotenv()
-
-from handlers.text_handler import handle_text
-from handlers.audio_handler import handle_audio
 
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 host_id = os.getenv("HOST_LINE_ID")
-text = ""
+
+
 def handle_host_reply(event):
-    user_id = event.source.user_id
+    # 僅允許管理者操作
+    if not is_host(event.source.user_id):
+        # 非主辦人交給 handle_text 處理（避免吞掉事件）
+        try:
+            handle_text(event)
+        except:
+            handle_audio(event)
+        return
+ 
+    # 取得輸入文字（語音→文字）
+    if isinstance(event.message, AudioMessage):
+        text = handle_audio(event).strip()
+        print(f"Is audio {text}")
+    elif isinstance(event.message, TextMessage):
+        user_id = event.source.user_id
+        user_text = event.message.text.strip()
 
-    if is_host(user_id):
-        print(f"（管理者本人傳送💅）")
-
-        # --------------------------------------------------
-        # 判斷傳入的訊息「類型」、是否為「預約資訊」。
-        #     是：傳給老闆確認
-        #     否：進行罐頭回覆或自動回覆（已經分流但還沒做自動回覆）
-
-        # 語音訊息
-        if isinstance(event.message, AudioMessage):
-            msg_type = "語音訊息"
-            text = handle_audio(event)
-        # 文字訊息
-        elif isinstance(event.message, TextMessage):
-            msg_type = "文字訊息"
-            text = handle_text(event)
-        # 無法判斷
+        # 主辦人輸入控制指令才執行主辦邏輯，其餘照一般訊息處理
+        if user_id == host_id and (
+            user_text.startswith("確認新增") or
+            user_text.startswith("修改") or
+            user_text.startswith("刪除")
+        ):
+            text = user_text
         else:
-            msg_type = "未知類型的訊息"
-            text = "無"
-        # 紀錄
-        print(f"🔐 收到來自 {user_id} 的{msg_type}，內容: {text}")
+            text = handle_text(event).strip()
 
-        # ------------ 處理預約相關訊息 -------------
-        if is_reservation_request(text):
-            line_bot_api.reply_message(event.reply_token, text_reply(f"【預約】\n預約訊息：{text}"))
-            line_bot_api.push_message(host_id, text_reply(f"🔔 使用者 {user_id} \n傳送{msg_type}：「{text}」"))
-            line_bot_api.push_message(host_id, text_reply("請輸入預約資訊或操作指令，例如：\n1. 確認新增\n2. 修改\n3. 刪除\n4. 取消"))
+        print(f"Is text {text}")
+    else:
+        text = None
+    reply_text = ""
+    # 根據指令執行
+    if text.startswith("確認新增"):
+        from services.reservation_draft import get_text_draft
+        from services.llm_service import extract_reservation_info
+        text_draft = get_text_draft(event.source.user_id)
+        reservation = extract_reservation_info(text_draft)
+        reservation["user_id"] = event.source.user_id
+        reservation["confirmed"] = True
+        finalize_and_save(event.source.user_id, reservation)
+        from services.reservation_draft import update_draft
+        update_draft(user_id=event.source.user_id, **{k: v for k, v in reservation.items() if k != "user_id"})
+        reply_text = "✅ 已新增預約並通知使用者"
 
-            if isinstance(event.message, TextMessage):
-                if text.startswith("確認新增"):
-                    reservation = confirm_draft(user_id)
-                    finalize_and_save(user_id, reservation)
-                    line_bot_api.reply_message(event.reply_token, text_reply("✅ 已新增預約並通知使用者"))
+    elif text.startswith("修改"):
+        from services.reservation_draft import get_text_draft
+        draft_text = get_text_draft(event.source.user_id)
+        print(f"[純文字草稿內容] {draft_text}")
+        reply_text = (
+            "📝 修改預約：\n\n"
+            f"{draft_text}\n"
+        )
+    
 
-                elif text.startswith("修改"):
-                    _, key, value = text.split(" ", 2)
-                    update_draft(user_id, **{key: value})
-                    line_bot_api.reply_message(event.reply_token, text_reply(f"✏️ 已更新 {key} 為 {value}"))
-                    line_bot_api.push_message(host_id, text_reply(f"🔔 使用者 {user_id} 修改 {key} 為 {value}"))
+    elif is_host(event.source.user_id):
+        from services.reservation_draft import save_text_draft
+        from services.llm_service import extract_reservation_info
+        try:
+            if text.startswith("📝 修改預約"):
+                print("這是修改預約的訊息")
+                raw_content = text.replace("📝 修改預約", "", 1).strip()
+                reservation_info = extract_reservation_info(raw_content)
+                preview_lines = [f"{k}: {v}" for k, v in reservation_info.items() if k != "missing"]
+                reply_text = (
+                    "🔍 以下是解析後的預約內容預覽，請輸入「確認新增」以儲存：\n\n"
+                    + "\n".join(preview_lines)
+                )
+                save_text_draft(event.source.user_id, raw_content)
+        except Exception as e:
+            reply_text = f"⚠️ 預約內容解析失敗：{e}"
+       
+    elif text.startswith("刪除"):
+        delete_draft(event.source.user_id)
+        reply_text = "🗑 草稿已刪除"
 
-                elif text.startswith("刪除"):
-                    delete_draft(user_id)
-                    line_bot_api.reply_message(event.reply_token, text_reply("🗑 草稿已刪除"))
-                    line_bot_api.push_message(host_id, text_reply(f"🔔 使用者 {user_id} 刪除預約草稿"))
+    else:
+        reply_text = (
+            "⚠️ 無法辨識操作，請輸入：\n"
+            "1. 確認新增\n"
+            "2. 修改 [欄位] [值]\n"
+            "3. 刪除"
+        )
 
-                else:
-                    line_bot_api.reply_message(event.reply_token, text_reply("無法辨識操作"))
-        else:
-            line_bot_api.reply_message(event.reply_token, text_reply(f"【非預約】\n訊息：{text}"))
+    try:
+        line_bot_api.reply_message(
+            event.reply_token,  # Corrected to use reply_token
+            text_reply(reply_text)  # Ensure this returns a valid TextSendMessage
+        )
+    except LineBotApiError as e:
+        print(f"❌ 無法回覆訊息，錯誤：{e.status_code} - {e.message}")

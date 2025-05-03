@@ -1,21 +1,70 @@
+# text_handler.py
 from services.llm_service import is_reservation_request, extract_reservation_info
-from services.notify_host import notify_host_reservation
 from services.reservation_draft import save_draft
+from services.notify_host import notify_host_reservation
 from services.response_builder import text_reply
 from linebot import LineBotApi
 import os
 
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 
+# 暫存使用者進入預約流程的狀態
+user_stage = {}
+
 def handle_text(event):
     text = event.message.text.strip()
     user_id = event.source.user_id
 
-    if is_reservation_request(text):
+    try:
         reservation = extract_reservation_info(text)
         reservation['user_id'] = user_id
-        save_draft(user_id, reservation) # 到這步的邏輯都一樣
-        notify_host_reservation(reservation) # 通知老闆後的處理看一下
-        line_bot_api.reply_message(event.reply_token, text_reply("🌟 看起來您有預約需求，稍後老闆會進行確認"))
+        save_draft(user_id, reservation)
+        from services.reservation_draft import save_text_draft
+        save_text_draft(user_id, text)
+        notify_host_reservation(reservation)
+        line_bot_api.reply_message(
+            event.reply_token,
+            text_reply("✅ 您的預約資訊已收到，請稍候主辦人確認")
+        )
+        return text
+    except Exception:
+        pass  # 無法提取預約資訊則繼續往下檢查是否為預約需求
+
+    if is_reservation_request(text):
+        print(f"🔍 偵測到預約需求: {text}")
+        user_stage[user_id] = 'awaiting_details'
+        line_bot_api.reply_message(
+            event.reply_token,
+            text_reply("🌟 看起來您有預約需求，但目前無法辨識完整資訊，請回傳以下格式\n姓名:\n電話:\n預約日期與時間:\n其他:")
+        )
+        return text
+
+    # 若使用者已進入預約流程，等待其填寫資料
+    if user_id in user_stage and user_stage[user_id] == 'awaiting_details':
+        try:
+            # 使用者已回覆預約細節，嘗試提取並儲存
+            reservation = extract_reservation_info(text)
+            reservation['user_id'] = user_id
+            save_draft(user_id, reservation)
+            from services.reservation_draft import save_text_draft
+            save_text_draft(user_id, text)
+            notify_host_reservation(reservation)
+            line_bot_api.reply_message(
+                event.reply_token,
+                text_reply("✅ 您的預約資訊已收到，請稍候主辦人確認")
+            )
+        except Exception:
+            line_bot_api.reply_message(
+                event.reply_token,
+                text_reply("請依照以下格式提供:\n姓名:\n電話:\n預約日期與時間:\n其他:")
+            )
+        finally:
+            user_stage.pop(user_id, None)  # 清除狀態
+            return text
+
     else:
-        line_bot_api.reply_message(event.reply_token, text_reply("我們已收到您的文字訊息"))
+        line_bot_api.reply_message(
+            event.reply_token,
+            text_reply("我們已收到您的文字訊息")
+        )
+    return text

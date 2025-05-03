@@ -28,13 +28,13 @@ def build_reservation_flex(reservation: dict) -> FlexSendMessage:
                 },
                 {
                     "type": "button",
-                    "action": { "type": "message", "label": "🗑 刪除", "text": "刪除" },
-                    "color": "#d33",
+                    "action": { "type": "message", "label": "📑 修改", "text": "修改" },
                     "style": "secondary"
                 },
                 {
-                    "type": "text",
-                    "text": "如需修改欄位，請直接傳訊息：\n修改 電話 0932xxxxxx\n或傳語音進行備註"
+                    "type": "button",
+                    "action": { "type": "message", "label": "❌ 刪除", "text": "刪除" },
+                    "style": "secondary"
                 }
             ]
         }
