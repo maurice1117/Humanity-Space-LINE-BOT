@@ -11,13 +11,13 @@ line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 def handle_audio(event):
     user_id = event.source.user_id
     file_path = download_audio(event.message.id, os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
-    text = transcribe_audio(file_path)
+    text = transcribe_audio(file_path).strip()
     # 如果LLM判斷為預約相關的訊息，則提取相關資訊並儲存草稿
     if is_reservation_request(text):
         reservation = extract_reservation_info(text)
         reservation["user_id"] = user_id
         save_draft(user_id, reservation)
         notify_host_reservation(reservation)
-        line_bot_api.reply_message(event.reply_token, text_reply("語音已收到，我們將進行審核處理"))
+        line_bot_api.reply_message(event.reply_token, text_reply("🌟 聽起來您有預約需求，稍後老闆會進行確認"))
     else:
         line_bot_api.reply_message(event.reply_token, text_reply("我們已收到您的語音訊息"))
