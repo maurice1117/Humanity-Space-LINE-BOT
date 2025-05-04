@@ -22,8 +22,6 @@ def confirm_draft(user_id):
 
 def get_draft(user_id):
     return drafts.get(user_id, {})
-
-
 # Functions for plain text reservation drafts
 def save_text_draft(user_id, text):
     text_drafts[user_id] = text

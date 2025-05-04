@@ -71,7 +71,10 @@ def handle_host_reply(event):
             f"{draft_text}\n"
         )
     
-
+    elif text.startswith("刪除"):
+        delete_draft(event.source.user_id)
+        reply_text = "🗑 草稿已刪除"
+        
     elif is_host(event.source.user_id):
         from services.reservation_draft import save_text_draft
         from services.llm_service import extract_reservation_info
@@ -89,9 +92,7 @@ def handle_host_reply(event):
         except Exception as e:
             reply_text = f"⚠️ 預約內容解析失敗：{e}"
        
-    elif text.startswith("刪除"):
-        delete_draft(event.source.user_id)
-        reply_text = "🗑 草稿已刪除"
+    
 
     else:
         reply_text = (
