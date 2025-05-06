@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservation Form</title>
+</head>
+<body>
+    <h1>Reservation Form</h1>
+    <form id="reservationForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required><br><br>
+
+        <label for="tel">Phone:</label>
+        <input type="tel" id="tel" name="tel" required><br><br>
+
+        <label for="date">Date (YYYY/MM/DD):</label>
+        <input type="text" id="date" name="date" required><br><br>
+
+        <label for="memo">Memo:</label>
+        <textarea id="memo" name="memo"></textarea><br><br>
+
+        <button type="submit">Submit</button>
+    </form>
+
+    <script>
+        document.getElementById("reservationForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+    
+            const formData = {
+                name: document.getElementById("name").value,
+                tel: document.getElementById("tel").value,
+                date: document.getElementById("date").value,
+                memo: document.getElementById("memo").value
+            };
+
+            console.log("Form data:", formData);
+    
+            try {
+                const response = await fetch("http://127.0.0.1:5000/api/reservation", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                console.log("Response status:", response.status);
+
+                // 檢查回應是否為 JSON
+                if (!response.headers.get("Content-Type")?.includes("application/json")) {
+                    throw new Error("Response is not JSON");
+                }
+
+                const result = await response.json();
+                console.log("Response body:", result);
+
+                alert(result.message);
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Failed to submit the form.");
+            }
+        });
+    </script>
+</body>
+</html>
