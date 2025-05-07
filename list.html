@@ -37,7 +37,7 @@
             console.log("Form data:", formData);
     
             try {
-                const response = await fetch("http://127.0.0.1:5000/api/reservation", {
+                const response = await fetch("/api/reservation", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"

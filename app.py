@@ -1,10 +1,13 @@
-from flask import Flask, request, abort
+from flask import Flask, request, abort, jsonify
+from flask_cors import CORS
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 from reservation_service import notify_admin
 from message_extraction import extract_reservation_data
 from dotenv import load_dotenv
+from datetime import datetime
+import json
 import os
 import re
 
@@ -12,6 +15,7 @@ import re
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app)
 
 channel_access_token = os.getenv('LINE_CHANNEL_ACCESS_TOKEN')
 channel_secret = os.getenv('LINE_CHANNEL_SECRET')
@@ -40,6 +44,27 @@ def callback():
 
     return 'OK'
 
+@app.route("/api/reservation", methods=["POST"])
+def create_reservation():
+    data = request.json
+
+    print("Received data:", data)
+
+    # 驗證資料
+    if not data.get("name") or not data.get("tel") or not data.get("date"):
+        return jsonify({"message": "Missing required fields"}), 400
+
+    # 驗證日期格式
+    try:
+        datetime.strptime(data["date"], "%Y/%m/%d")
+    except ValueError:
+        return jsonify({"message": "Invalid date format. Use YYYY/MM/DD"}), 400
+
+    # 儲存資料（這裡可以儲存到檔案或資料庫）
+    with open("data/data.json", "a", encoding="utf-8") as file:
+        file.write(json.dumps(data, ensure_ascii=False) + "\n")
+
+    return jsonify({"message": "Reservation created successfully"}), 201
 
 @app.route("/ping", methods=["GET"])
 def ping():

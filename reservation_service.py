@@ -7,7 +7,7 @@ load_dotenv()
 
 
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
-ADMIN_USER_ID = os.getenv("ADMIN_USER_ID")  # 或你可以寫入白名單驗證函式
+ADMIN_USER_ID = os.getenv("ADMIN_USER_ID")
 
 def notify_admin(reservation_data, user_id):
     try:
