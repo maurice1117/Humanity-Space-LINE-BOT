@@ -7,6 +7,7 @@ openai.api_base = "https://api.together.xyz/v1"
 openai.api_key = os.getenv("TOGETHER_API_KEY")
 
 def is_reservation_request(text: str) -> bool:
+    print(f"together.ai 正在判斷預約需求")
     prompt = f"請判斷以下訊息是否與預約相關，回答True或False：\n{text}\n回答："
     response = openai.ChatCompletion.create(
         model="mistralai/Mistral-7B-Instruct-v0.1",

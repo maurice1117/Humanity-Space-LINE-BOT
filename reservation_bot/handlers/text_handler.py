@@ -24,7 +24,7 @@ def handle_text(event):
         notify_host_reservation(reservation)
         line_bot_api.reply_message(
             event.reply_token,
-            text_reply("✅ 您的預約資訊已收到，請稍候主辦人確認")
+            text_reply("✅ 您的預約資訊已收到，請稍候老闆娘確認")
         )
         return text
     except Exception:
@@ -51,7 +51,7 @@ def handle_text(event):
             notify_host_reservation(reservation)
             line_bot_api.reply_message(
                 event.reply_token,
-                text_reply("✅ 您的預約資訊已收到，請稍候主辦人確認")
+                text_reply("✅ 您的預約資訊已收到，請稍候老闆娘確認")
             )
         except Exception:
             line_bot_api.reply_message(
