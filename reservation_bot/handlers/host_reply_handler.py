@@ -48,7 +48,7 @@ def handle_host_reply(event):
         print(f"Is text {text}")
     else:
         text = None
-    reply_text = ""
+    reply_text = "有喔！"
     # 根據指令執行
     if text.startswith("確認新增"):
         from services.reservation_draft import get_text_draft
@@ -101,11 +101,18 @@ def handle_host_reply(event):
             "2. 修改 [欄位] [值]\n"
             "3. 刪除"
         )
-
     try:
         line_bot_api.reply_message(
             event.reply_token,  # Corrected to use reply_token
             text_reply(reply_text)  # Ensure this returns a valid TextSendMessage
         )
     except LineBotApiError as e:
-        print(f"❌ 無法回覆訊息，錯誤：{e.status_code} - {e.message}")
+        # 輸出詳細的錯誤訊息
+        print(f"❌ 無法回覆訊息，錯誤代碼：{e.status_code}")
+        print(f"❌ 錯誤訊息：{e.message}")
+        if e.error.details:
+            for detail in e.error.details:
+                print(f"❌ 錯誤細節：{detail.property} - {detail.message}")
+    except Exception as e:
+        # 捕捉其他未知的錯誤
+        print(f"⚠️ 未知錯誤：{type(e).__name__} - {e}")
