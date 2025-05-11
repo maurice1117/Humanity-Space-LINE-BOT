@@ -19,6 +19,107 @@ host_id = os.getenv("HOST_LINE_ID")
 
 def handle_host_reply(event):
     # 僅允許管理者操作
+    if is_host(event.source.user_id):
+        # 非主辦人交給 handle_text 處理（避免吞掉事件）
+        print("非主辦人")
+        try:
+            handle_text(event)
+        except:
+            handle_audio(event)
+        return
+
+    # 取得輸入文字（語音→文字）
+    text = get_event_text(event)
+    if not text:
+        reply_with_error(event, "⚠️ 無法處理的訊息類型")
+        return
+
+    # 根據指令分派處理邏輯
+    if text.startswith("確認新增"):
+        handle_confirm_add(event)
+    elif text.startswith("修改"):
+        handle_modify(event)
+    elif text.startswith("刪除"):
+        handle_delete(event)
+    else:
+        handle_unknown_command(event)
+
+def get_event_text(event):
+    if isinstance(event.message, AudioMessage):
+        return handle_audio(event).strip()
+    elif isinstance(event.message, TextMessage):
+        return event.message.text.strip()
+    return None
+
+def reply_with_error(event, message):
+    try:
+        line_bot_api.reply_message(
+            event.reply_token,
+            text_reply(message)
+        )
+    except LineBotApiError as e:
+        print(f"❌ 無法回覆訊息，錯誤代碼：{e.status_code}")
+        print(f"❌ 錯誤訊息：{e.message}")
+    except Exception as e:
+        print(f"⚠️ 未知錯誤：{type(e).__name__} - {e}")
+
+def handle_confirm_add(event):
+    from services.reservation_draft import get_text_draft
+    from services.llm_service import extract_reservation_info
+
+    try:
+        text_draft = get_text_draft(event.source.user_id)
+        reservation = extract_reservation_info(text_draft)
+        reservation["user_id"] = event.source.user_id
+        reservation["confirmed"] = True
+        finalize_and_save(event.source.user_id, reservation)
+
+        from services.reservation_draft import update_draft
+        update_draft(user_id=event.source.user_id, **{k: v for k, v in reservation.items() if k != "user_id"})
+
+        reply_text = "✅ 已新增預約並通知使用者"
+    except Exception as e:
+        reply_text = f"⚠️ 新增預約失敗：{e}"
+
+    reply_with_error(event, reply_text)
+
+def handle_modify(event):
+    from services.reservation_draft import get_text_draft
+
+    try:
+        draft_text = get_text_draft(event.source.user_id)
+        print(f"[純文字草稿內容] {draft_text}")
+        reply_text = (
+            "📝 修改預約：\n\n"
+            f"{draft_text}\n"
+        )
+    except Exception as e:
+        reply_text = f"⚠️ 修改預約失敗：{e}"
+
+    reply_with_error(event, reply_text)
+
+def handle_delete(event):
+    from services.reservation_draft import delete_draft
+
+    try:
+        delete_draft(event.source.user_id)
+        reply_text = "🗑 草稿已刪除"
+    except Exception as e:
+        reply_text = f"⚠️ 刪除草稿失敗：{e}"
+
+    reply_with_error(event, reply_text)
+
+def handle_unknown_command(event):
+    reply_text = (
+        "⚠️ 無法辨識操作，請輸入：\n"
+        "1. 確認新增\n"
+        "2. 修改 [欄位] [值]\n"
+        "3. 刪除"
+    )
+    reply_with_error(event, reply_text)
+"""
+def handle_host_reply(event):
+    # 僅允許管理者操作
     if not is_host(event.source.user_id):
         # 非主辦人交給 handle_text 處理（避免吞掉事件）
         try:
@@ -42,10 +143,9 @@ def handle_host_reply(event):
             user_text.startswith("刪除")
         ):
             text = user_text
-        else:
+        else: # 這裡可能會出bug，當host輸入的訊息並非上面的部分的時候，會直接進入handle_text的function裡面
             text = handle_text(event).strip()
-
-        print(f"Is text {text}")
+            return
     else:
         text = None
     reply_text = "有喔！"
@@ -95,6 +195,7 @@ def handle_host_reply(event):
     
 
     else:
+        # 這裡是當主辦人輸入的訊息不是上面的部分的時候，會直接進入handle_text的function裡面
         reply_text = (
             "⚠️ 無法辨識操作，請輸入：\n"
             "1. 確認新增\n"
@@ -116,3 +217,4 @@ def handle_host_reply(event):
     except Exception as e:
         # 捕捉其他未知的錯誤
         print(f"⚠️ 未知錯誤：{type(e).__name__} - {e}")
+"""

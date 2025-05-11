@@ -36,13 +36,14 @@ def handle_text(event):
                 event.reply_token,
                 text_reply("✅ 您的預約資訊已收到，請稍候老闆娘確認")
             )
+            return text
         except Exception:
             # 如果提取失敗，請求使用者重新提供資訊
             line_bot_api.reply_message(
                 event.reply_token,
                 text_reply("🌟 看起來您有預約需求，但目前無法辨識完整資訊，請回傳以下格式\n姓名:\n電話:\n預約日期與時間:\n其他:")
             )
-        return text
+            return text
 
     # 如果不是預約需求，回覆預設訊息
     line_bot_api.reply_message(
