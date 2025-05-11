@@ -19,7 +19,7 @@ host_id = os.getenv("HOST_LINE_ID")
 
 def handle_host_reply(event):
     # 僅允許管理者操作
-    if is_host(event.source.user_id):
+    if is_host(event.source.user_id): # 暫時刪掉not用來測試
         # 非主辦人交給 handle_text 處理（避免吞掉事件）
         print("非主辦人")
         try:
