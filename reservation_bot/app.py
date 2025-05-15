@@ -3,6 +3,7 @@ from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from handlers.unified_router import register_handlers
+from services.daily_notify_text import daily_notify
 import os
 
 load_dotenv()
@@ -60,6 +61,20 @@ def callback():
 def ping():
     return "pong", 200
 
+#--------------------------------------
+#
+@app.route("/daily_notify", methods=["GET"])
+def daily_notify_route():
+    try:
+        daily_notify()
+        return {"status": "success", "message": "Notification sent"}, 200
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"status": "error", "message": str(e)}, 500
+    
+    
+    
 @app.before_request
 def catch_all_requests():
     print(f"🛎️ 收到請求：{request.method} {request.path}")

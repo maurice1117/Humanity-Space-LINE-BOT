@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 load_dotenv()
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN") )
 
-
+## 可以選擇時間
 def send_datetime_picker(event):
     now = datetime.now()
     nowtime = now.strftime("%Y-%m-%dT%H:%M")

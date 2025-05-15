@@ -42,6 +42,7 @@ def build_reservation_flex(reservation: dict) -> FlexSendMessage:
 
     return FlexSendMessage(alt_text="預約審核通知", contents=flex_json)
 
+## NEW
 def notify_before_one_day(reservation) -> FlexSendMessage:
     
     name = reservation.get("name", "貴賓")
