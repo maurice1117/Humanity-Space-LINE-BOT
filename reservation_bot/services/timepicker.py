@@ -11,8 +11,12 @@ line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN") )
 def send_datetime_picker(event):
     now = datetime.now()
     nowtime = now.strftime("%Y-%m-%dT%H:%M")
-    min_datetime = time.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
-    max_datetime = nowtime+timedelta(days=180, hours=23, minutes=59)
+    # min_datetime = time.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
+    min_datetime = now
+    min_datetime_str = min_datetime.strftime("%Y-%m-%dT%H:%M")
+    print(min_datetime_str)
+    max_datetime = now + timedelta(days=180, hours=23, minutes=59)
+    max_datetime_str = max_datetime.strftime("%Y-%m-%dT%H:%M")  
     message = TemplateSendMessage(
         alt_text="請選擇預約時間",
         template=ButtonsTemplate(
@@ -20,16 +24,17 @@ def send_datetime_picker(event):
             actions=[
                 DatetimePickerAction(
                     label="選擇日期和時間",
-                    data="action=select_datetime",
+                    data=f"action=select_datetime&t={int(time.time())}",
                     mode="datetime",
                     initial=nowtime,
-                    min=min_datetime.strftime("%Y-%m-%dT%H:%M"),
-                    max=max_datetime.strftime("%Y-%m-%dT%H:%M")
+                    min=min_datetime_str,
+                    max=max_datetime_str   
                 )
             ]
         )
     )
     line_bot_api.reply_message(event.reply_token, message)
+
 
 
 # @handler.add(PostbackEvent)
