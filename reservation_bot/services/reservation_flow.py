@@ -7,6 +7,8 @@ def pad_reservation(data):
     for key in DEFAULT_KEYS:
         if key not in data:
             data[key] = ""
+    if "confirmed" not in data:
+        data["confirmed"] = False
     return data
     
 def save_reservation_to_json(data: dict, path="data/reservation.json"):
@@ -16,5 +18,6 @@ def save_reservation_to_json(data: dict, path="data/reservation.json"):
         f.write("\n")
 
 def finalize_and_save(user_id, reservation_data):
+    reservation_data["confirmed"] = True
     save_reservation_to_json(reservation_data)
     notify_user_reservation_confirmed(user_id, reservation_data)
