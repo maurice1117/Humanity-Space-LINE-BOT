@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import json
 
 
-def load_reservations(path = "J:\Humanity-Space-LINE-BOT\\reservation_bot\data\\reservation.json"):
+def load_reservations(path = "reservation_bot\data\\reservation.json"):
 ##(path="data/reservation.json"):
     reservations = []
     with open(path, "r", encoding="utf-8") as f:
