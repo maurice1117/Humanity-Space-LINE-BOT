@@ -22,7 +22,7 @@ def extract_reservation_info(text: str) -> dict:
 - name（姓名）
 - tel（電話）
 - date（預約時間與日期）
-- memo（備註：如吃素、過敏、生日、很吵）
+- memo（備註：如吃素、過敏、生日）
 訊息如下：
 {text}
 
