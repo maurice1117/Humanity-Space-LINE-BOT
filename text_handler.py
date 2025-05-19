@@ -1,6 +1,7 @@
 from linebot.models import TextSendMessage, FlexSendMessage
 from linebot import LineBotApi
 import os
+import json
 
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 
@@ -70,11 +71,32 @@ def handle_text(event):
             alt_text="請選擇預約時段與人數",
             contents=flex_json
         )
-
         line_bot_api.reply_message(event.reply_token, message)
 
     else:
+        try:
+            # 嘗試將 user_text 當作 JSON 字串解析
+            data = json.loads(user_text)
+
+            # 檢查
+            required_fields = ["name", "tel", "date", "預約目的", "分店", "memo"]
+            if all(field in data for field in required_fields):
+                reply = (
+                    f"✅ 預約資訊如下：\n"
+                    f"姓名：{data['name']}\n"
+                    f"電話：{data['tel']}\n"
+                    f"日期：{data['date']}\n"
+                    f"目的：{data['預約目的']}\n"
+                    f"分店：{data['分店']}\n"
+                    f"備註：{data['memo']}"
+                )
+            else:
+                reply = "❗JSON 格式缺少必要欄位，請確認是否有：name, tel, date, 預約目的, 分店, memo"
+
+        except json.JSONDecodeError:
+            reply = "❗請輸入正確的 JSON 格式（包含 name, tel, date, 預約目的, 分店, memo）"
+
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text=user_text)
+            TextSendMessage(text=reply)
         )
