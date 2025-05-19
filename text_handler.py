@@ -78,23 +78,26 @@ def handle_text(event):
             # 嘗試將 user_text 當作 JSON 字串解析
             data = json.loads(user_text)
 
-            # 檢查
-            required_fields = ["name", "tel", "date", "預約目的", "分店", "memo"]
-            if all(field in data for field in required_fields):
-                reply = (
-                    f"✅ 預約資訊如下：\n"
-                    f"姓名：{data['name']}\n"
-                    f"電話：{data['tel']}\n"
-                    f"日期：{data['date']}\n"
-                    f"目的：{data['預約目的']}\n"
-                    f"分店：{data['分店']}\n"
-                    f"備註：{data['memo']}"
-                )
-            else:
-                reply = "❗JSON 格式缺少必要欄位，請確認是否有：name, tel, date, 預約目的, 分店, memo"
+           # 建立欄位對應的中文名稱
+            field_names = {
+                "name": "姓名",
+                "tel": "電話",
+                "date": "日期",
+                "預約目的": "目的",
+                "分店": "分店",
+                "memo": "備註"
+            }
+            
+            # 動態組合訊息內容，只加上有提供的欄位
+            reply_lines = ["✅ 預約資訊如下："]
+            for key, label in field_names.items():
+                if key in data:
+                    reply_lines.append(f"{label}：{data[key]}")
+    
+            reply = "\n".join(reply_lines)
 
         except json.JSONDecodeError:
-            reply = "❗請輸入正確的 JSON 格式（包含 name, tel, date, 預約目的, 分店, memo）"
+            reply = "❗請輸入正確的 JSON 格式"
 
         line_bot_api.reply_message(
             event.reply_token,
