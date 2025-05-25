@@ -2,9 +2,10 @@
 from services.llm_service import is_reservation_request, extract_reservation_info
 from services.reservation_draft import save_draft
 from services.notify_host import notify_host_reservation
-from services.response_builder import text_reply
+from services.response_builder import text_reply, build_dynamic_reservation_reply
 from linebot import LineBotApi
 import os
+import json
 
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 
@@ -15,30 +16,35 @@ def handle_text(event):
     text = event.message.text.strip()
     user_id = event.source.user_id
 
+    # 嘗試解析 JSON 格式（如果是的話）
+    try:
+        data = json.loads(text)
+        reply_text = build_dynamic_reservation_reply(data)
+        line_bot_api.reply_message(
+            event.reply_token,
+            text_reply(reply_text)
+        )
+        return text
+    except json.JSONDecodeError:
+        # 不是 JSON → 走原本的流程
+        pass
+
     # 檢查是否為預約需求
     if is_reservation_request(text):
         print(f"🔍 偵測到預約需求: {text}")
         try:
-            # 嘗試提取完整的預約資訊
             reservation = extract_reservation_info(text)
             reservation['user_id'] = user_id
-
-            # 儲存預約資訊
             save_draft(user_id, reservation)
             from services.reservation_draft import save_text_draft
             save_text_draft(user_id, text)
-
-            # 通知店主
             notify_host_reservation(reservation)
-
-            # 回覆使用者
             line_bot_api.reply_message(
                 event.reply_token,
                 text_reply("✅ 您的預約資訊已收到，請稍候老闆娘確認")
             )
             return text
         except Exception:
-            # 如果提取失敗，請求使用者重新提供資訊
             line_bot_api.reply_message(
                 event.reply_token,
                 text_reply("🌟 看起來您有預約需求，但目前無法辨識完整資訊，請回傳以下格式\n姓名:\n電話:\n預約日期與時間:\n其他:")
