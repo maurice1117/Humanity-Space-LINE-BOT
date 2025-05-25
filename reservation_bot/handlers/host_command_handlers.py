@@ -13,7 +13,7 @@ from linebot import LineBotApi
 from linebot.exceptions import LineBotApiError
 
 # 內建
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import os
 import re
@@ -97,6 +97,32 @@ def handle_query_for_today(event):
         reply_text = "今天尚無預約紀錄。"
     else:
         reply_text = "今日預約如下：\n"
+        for r in reservations:
+            reply_text += f"{r.get('name','')} {r.get('start_time','')} {r.get('tel','')} {r.get('memo','')}\n"
+
+    reply_with_error(event, reply_text)
+
+# 老闆娘查詢明日預約的邏輯
+def handle_query_for_tomorrow(event):
+    tomorrow = (datetime.now() + timedelta(days=1)).strftime("%Y/%m/%d")
+    tomorrow_keywords = ["明天", "tomorrow"]
+
+    reservations = []
+    with open("data/reservation.json", "r", encoding="utf-8") as f:
+        for line in f:
+            try:
+                data = json.loads(line)
+                date_str = str(data.get("date", ""))
+                # 判斷是否為明天
+                if tomorrow in date_str or any(kw in date_str for kw in tomorrow_keywords):
+                    reservations.append(data)
+            except Exception as e:
+                print(f"資料解析錯誤: {e}")
+
+    if not reservations:
+        reply_text = "明天尚無預約紀錄。"
+    else:
+        reply_text = "明日預約如下：\n"
         for r in reservations:
             reply_text += f"{r.get('name','')} {r.get('start_time','')} {r.get('tel','')} {r.get('memo','')}\n"
 
