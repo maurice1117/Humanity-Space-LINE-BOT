@@ -78,8 +78,7 @@ def handle_unknown_command(event):
 
 # 老闆娘查詢本日預約的邏輯
 def handle_query_for_today(event):
-    today = datetime.now().strftime("%Y/%m/%d")
-    today_keywords = ["今天", "today"]
+    today = datetime.now().date()  # 只取日期部分
 
     reservations = []
     with open("data/reservation.json", "r", encoding="utf-8") as f:
@@ -87,8 +86,19 @@ def handle_query_for_today(event):
             try:
                 data = json.loads(line)
                 date_str = str(data.get("date", ""))
-                # 判斷是否為今天
-                if today in date_str or any(kw in date_str for kw in today_keywords):
+                # 嘗試將 date_str 轉成 datetime 物件
+                try:
+                    date_obj = datetime.strptime(date_str, "%Y/%m/%d").date()  # 只取日期部分
+                except ValueError:
+                    # 若格式不同（如 "2025/5/27"），再試一次
+                    try:
+                        date_obj = datetime.strptime(date_str, "%Y/%m/%d").replace(
+                            month=int(date_str.split("/")[1]), day=int(date_str.split("/")[2])
+                        ).date()  # 只取日期部分
+                    except Exception:
+                        date_obj = None
+                # 比對日期或關鍵字
+                if (date_obj and date_obj == today):
                     reservations.append(data)
             except Exception as e:
                 print(f"資料解析錯誤: {e}")
@@ -104,8 +114,8 @@ def handle_query_for_today(event):
 
 # 老闆娘查詢明日預約的邏輯
 def handle_query_for_tomorrow(event):
-    tomorrow = (datetime.now() + timedelta(days=1)).strftime("%Y/%m/%d")
-    tomorrow_keywords = ["明天", "tomorrow"]
+    tomorrow = (datetime.now() + timedelta(days=1)).date()  # 只取日期部分
+    # print(f"查詢明日預約，日期為: {tomorrow}")
 
     reservations = []
     with open("data/reservation.json", "r", encoding="utf-8") as f:
@@ -113,8 +123,20 @@ def handle_query_for_tomorrow(event):
             try:
                 data = json.loads(line)
                 date_str = str(data.get("date", ""))
-                # 判斷是否為明天
-                if tomorrow in date_str or any(kw in date_str for kw in tomorrow_keywords):
+                # 嘗試將 date_str 轉成 datetime 物件
+                try:
+                    date_obj = datetime.strptime(date_str, "%Y/%m/%d").date()  # 只取日期部分
+                    # print(f"日期解析成功: {date_obj}")
+                except ValueError:
+                    # 若格式不同（如 "2025/5/27"），再試一次
+                    try:
+                        date_obj = datetime.strptime(date_str, "%Y/%m/%d").replace(
+                            month=int(date_str.split("/")[1]), day=int(date_str.split("/")[2])
+                        ).date()  # 只取日期部分
+                    except Exception:
+                        date_obj = None
+                # 比對日期或關鍵字
+                if (date_obj and date_obj == tomorrow):
                     reservations.append(data)
             except Exception as e:
                 print(f"資料解析錯誤: {e}")

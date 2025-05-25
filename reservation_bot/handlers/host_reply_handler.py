@@ -27,6 +27,7 @@ import re
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 host_id = os.getenv("HOST_LINE_ID")
 
+
 def handle_host_reply(event):
     # 僅允許管理者操作
     if not is_host(event.source.user_id): # 可以暫時刪掉not用來測試guest的邏輯
@@ -51,7 +52,7 @@ def handle_host_reply(event):
             else:
                 handler(event)
             return
-        
+
     # 如果沒有符合的指令，則回覆錯誤訊息
     handle_unknown_command(event)
 
