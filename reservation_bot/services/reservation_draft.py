@@ -25,6 +25,7 @@ def get_draft(user_id):
 # Functions for plain text reservation drafts
 def save_text_draft(user_id, text):
     text_drafts[user_id] = text
+    print(f"[純文字草稿儲存] 使用者 {user_id} 的草稿已儲存: {text}")
 
 def get_text_draft(user_id):
     return text_drafts.get(user_id, "")

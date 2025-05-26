@@ -43,6 +43,30 @@ def build_reservation_flex(reservation: dict) -> FlexSendMessage:
 
     return FlexSendMessage(alt_text="預約審核通知", contents=flex_json)
 
+def build_host_query_flex() -> FlexSendMessage:
+    flex_json = {
+        "type": "bubble",
+        "body": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+                { "type": "text", "text": "老闆娘選單", "weight": "bold", "size": "lg" },
+                {
+                    "type": "button",
+                    "action": { "type": "message", "label": "📅 查詢今日預約", "text": "查詢今天預約" },
+                    "style": "primary"
+                },
+                {
+                    "type": "button",
+                    "action": { "type": "message", "label": "📅 查詢明日預約", "text": "查詢明天預約" },
+                    "style": "primary"
+                },
+            ]
+        }
+    }
+
+    return FlexSendMessage(alt_text="老闆娘選單", contents=flex_json)
+  
 def build_dynamic_reservation_reply(data: dict) -> str:
     """
     動態組合回覆文字：只顯示有提供的欄位
