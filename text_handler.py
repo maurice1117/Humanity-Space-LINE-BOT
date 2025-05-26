@@ -1,7 +1,6 @@
 from linebot.models import TextSendMessage, FlexSendMessage
 from linebot import LineBotApi
 import os
-import json
 
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 
@@ -71,35 +70,11 @@ def handle_text(event):
             alt_text="請選擇預約時段與人數",
             contents=flex_json
         )
+
         line_bot_api.reply_message(event.reply_token, message)
 
     else:
-        try:
-            # 嘗試將 user_text 當作 JSON 字串解析
-            data = json.loads(user_text)
-
-           # 建立欄位對應的中文名稱
-            field_names = {
-                "name": "姓名",
-                "tel": "電話",
-                "date": "日期",
-                "預約目的": "目的",
-                "分店": "分店",
-                "memo": "備註"
-            }
-            
-            # 動態組合訊息內容，只加上有提供的欄位
-            reply_lines = ["✅ 預約資訊如下："]
-            for key, label in field_names.items():
-                if key in data:
-                    reply_lines.append(f"{label}：{data[key]}")
-    
-            reply = "\n".join(reply_lines)
-
-        except json.JSONDecodeError:
-            reply = "❗請輸入正確的 JSON 格式"
-
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text=reply)
+            TextSendMessage(text=user_text)
         )

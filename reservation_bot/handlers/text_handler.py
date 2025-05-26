@@ -2,9 +2,10 @@
 from services.llm_service import is_reservation_request, extract_reservation_info
 from services.reservation_draft import save_draft, save_text_draft
 from services.notify_host import notify_host_reservation
-from services.response_builder import text_reply
+from services.response_builder import text_reply, build_dynamic_reservation_reply
 from linebot import LineBotApi
 import os
+import json
 
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 
@@ -18,6 +19,7 @@ def handle_text(event):
     # 檢查是否為預約需求
     if is_reservation_request(text):
         print(f"🔍 偵測到預約需求: {text}")
+
         handle_reservation_request(event, text, user_id)
     elif text.startswith("索取預約格式"):
         print(f"🔍 偵測到索取預約格式: {text}")
