@@ -7,6 +7,7 @@ text_drafts = {}
 
 def save_draft(user_id, draft_data):
     drafts[user_id] = pad_reservation(draft_data)
+    # print(f"[草稿儲存] 使用者 {user_id} 的草稿已儲存: {drafts[user_id]}")
 
 def update_draft(user_id, **kwargs):
     if user_id in drafts:
@@ -25,7 +26,6 @@ def get_draft(user_id):
 # Functions for plain text reservation drafts
 def save_text_draft(user_id, text):
     text_drafts[user_id] = text
-    print(f"[純文字草稿儲存] 使用者 {user_id} 的草稿已儲存: {text}")
 
 def get_text_draft(user_id):
     return text_drafts.get(user_id, "")

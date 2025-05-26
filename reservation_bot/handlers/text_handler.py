@@ -3,6 +3,7 @@ from services.llm_service import is_reservation_request, extract_reservation_inf
 from services.reservation_draft import save_draft, save_text_draft
 from services.notify_host import notify_host_reservation
 from services.response_builder import text_reply
+from services.reservation_flow import finalize_and_save
 from linebot import LineBotApi
 import os
 
@@ -29,10 +30,13 @@ def handle_reservation_request(event, text, user_id):
     try:
         # 提取預約資訊
         reservation = extract_reservation_info(text)
+        print(f"🔍 提取到的預約資訊: {reservation}")
         reservation['user_id'] = user_id
+        reservation["confirmed"] = True
 
         # 儲存預約資訊
         save_reservation_draft(user_id, reservation, text)
+        finalize_and_save(event.source.user_id, reservation)
 
         # 通知店主
         notify_host_reservation(reservation)
