@@ -20,22 +20,35 @@ import re
 
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 
-def handle_confirm_add(event):
-
+def handle_confirm_add(event, text):
+    """
+    處理確認新增預約的指令
+    """
     try:
-        text_draft = get_text_draft(event.source.user_id)
-        reservation = extract_reservation_info(text_draft)
-        reservation["user_id"] = event.source.user_id
-        reservation["confirmed"] = True
-        finalize_and_save(event.source.user_id, reservation)
+        # 確保 text 不為空，並嘗試解析
+        # if not text:
+        #     raise ValueError("輸入的文字內容為空，無法處理預約資訊。")
 
-        from services.reservation_draft import update_draft
-        update_draft(user_id=event.source.user_id, **{k: v for k, v in reservation.items() if k != "user_id"})
+        # reservation = extract_reservation_info(text)
+        # if not reservation or not isinstance(reservation, dict):
+        #     raise ValueError("無法從輸入文字中解析出有效的預約資訊。")
+
+        # print(f"[純文字草稿內容] {text}")
+        # reservation["user_id"] = event.source.user_id
+        # reservation["confirmed"] = True
+        # finalize_and_save(event.source.user_id, reservation)
+
+        # from services.reservation_draft import update_draft
+        # update_draft(user_id=event.source.user_id, **{k: v for k, v in reservation.items() if k != "user_id"})
 
         reply_text = "✅ 已新增預約並通知使用者"
     except Exception as e:
+        import traceback
+        print(f"錯誤類型：{type(e).__name__}")
+        print(f"錯誤詳情：{traceback.format_exc()}")
         reply_text = f"⚠️ 新增預約失敗：{e}"
 
+    # 回覆錯誤或成功訊息
     reply_with_error(event, reply_text)
 
 def handle_modify(event):

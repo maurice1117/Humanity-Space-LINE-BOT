@@ -48,7 +48,7 @@ def handle_host_reply(event):
     for cmd, (handler, need_text) in COMMAND_HANDLERS.items():
         if text.startswith(cmd):
             if need_text:
-                handler(event, text)
+                handler(event, event.message.text[len(cmd):].strip())
             else:
                 handler(event)
             return
@@ -66,7 +66,7 @@ def get_event_text(event):
 
 # 指令與對應的處理函數，標記是否需要帶入text
 COMMAND_HANDLERS = {
-    "確認新增": (handle_confirm_add, False),
+    "確認新增": (handle_confirm_add, True),
     "修改": (handle_modify, False),
     "刪除": (handle_delete, False),
     "查詢本日預約": (handle_query_for_today, False),
