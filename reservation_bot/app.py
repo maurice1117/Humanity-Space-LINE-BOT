@@ -62,7 +62,7 @@ def ping():
     return "pong", 200
 
 #--------------------------------------
-#
+#每日提醒
 @app.route("/daily_notify", methods=["GET"])
 def daily_notify_route():
     try:
