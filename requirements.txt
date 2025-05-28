@@ -26,4 +26,5 @@ flake8
 # 其他依賴
 requests
 pandas
+gunicorn
 
