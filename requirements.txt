@@ -16,7 +16,7 @@ whisper
 openai
 
 # JSON 處理與格式化（內建，但可加強版本）
-json
+ujson
 
 # 測試與除錯工具
 pytest
