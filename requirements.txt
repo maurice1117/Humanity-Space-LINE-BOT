@@ -3,7 +3,6 @@ flask
 
 # LINE Bot SDK
 line-bot-sdk
-linebot
 
 # 環境變數管理
 python-dotenv
