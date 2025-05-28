@@ -10,13 +10,9 @@ python-dotenv
 # Whisper 語音轉文字
 git+https://github.com/openai/whisper.git
 ffmpeg-python
-whisper
 
 # Together.ai API 模型支援
 openai
-
-# JSON 處理與格式化（內建，但可加強版本）
-ujson
 
 # 測試與除錯工具
 pytest
@@ -30,9 +26,4 @@ flake8
 # 其他依賴
 requests
 pandas
-os
-re
-datetime
-uuid
 
-# https://humanity-space-line-bot.onrender.com/callback
