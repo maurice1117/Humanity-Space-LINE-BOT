@@ -48,10 +48,10 @@ def extract_reservation_info(text: str) -> dict:
         json_str = result[json_start:json_end]
         return json.loads(json_str)
     except Exception:
-        return {{
-  "name": "...",
-  "tel": "...",
-  "date": "...",
-  "memo": "...",
+        return {
+  "name": "",
+  "tel": "",
+  "date": "",
+  "memo": "",
 
-}}
+}
