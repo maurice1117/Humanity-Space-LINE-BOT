@@ -33,9 +33,11 @@ def extract_reservation_info(text: str) -> dict:
 請根據以下使用者訊息，擷取預約資訊並回傳 JSON 格式，包含：
 - name（姓名）
 - tel（電話）
-- date（預約時間與日期）
-- memo（備註，如吃素、過敏、生日）
-
+- date（預約日期，格式"YYYY/MM/DD"）
+- start_time（預約時間，格式"hh:mm:ss，24小時制）
+- branch（分店名稱，如果有的話，否則留空）
+- memo（備註：如吃素、過敏、生日）
+>>>>>>> 7b7585b (date in LLM, JSON alignment)
 訊息如下：
 {text}
 
@@ -44,7 +46,11 @@ def extract_reservation_info(text: str) -> dict:
   "name": "...",
   "tel": "...",
   "date": "...",
-  "memo": "..."
+  "start_time": "...",
+  "branch": "...",  # 如果有分店資訊，請填寫，否則留空
+  "memo": "...",
+
+>>>>>>> 7b7585b (date in LLM, JSON alignment)
 }}
 
 若找不到資訊，請回傳：False
@@ -71,11 +77,14 @@ def extract_reservation_info(text: str) -> dict:
         json_str = result[json_start:json_end]
         return json.loads(json_str)
 
+
     except Exception as e:
         print(f"⚠️ 擷取 JSON 失敗：{e}")
         return {
             "name": "",
             "tel": "",
             "date": "",
+            "start_time": "",
+            "branch": "",
             "memo": ""
         }

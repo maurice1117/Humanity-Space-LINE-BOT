@@ -3,11 +3,13 @@ from linebot.models import TextSendMessage, FlexSendMessage
 
 def text_reply(text: str) -> TextSendMessage:
     return TextSendMessage(text=text)
-
+# 預約訊息
 def build_reservation_flex(reservation: dict) -> FlexSendMessage:
     name = reservation.get("name", "未知")
     tel = reservation.get("tel", "未提供")
     date = reservation.get("date", "未提供")
+    start_time = reservation.get("start_time", "未提供")
+    branch = reservation.get("branch", "未提供")
     memo = reservation.get("memo", "無")
 
     flex_json = {
@@ -21,6 +23,8 @@ def build_reservation_flex(reservation: dict) -> FlexSendMessage:
                 { "type": "text", "text": f"姓名：{name}" },
                 { "type": "text", "text": f"電話：{tel}" },
                 { "type": "text", "text": f"日期：{date}" },
+                { "type": "text", "text": f"時間：{start_time}" },
+                { "type": "text", "text": f"分店：{branch}" },
                 { "type": "text", "text": f"備註：{memo}" },
                 {
                     "type": "button",
@@ -43,7 +47,7 @@ def build_reservation_flex(reservation: dict) -> FlexSendMessage:
 
     return FlexSendMessage(alt_text="預約審核通知", contents=flex_json)
 
-## NEW
+# 前一天提醒 NEW
 def notify_before_one_day(reservation) -> FlexSendMessage:
     
     name = reservation.get("name", "貴賓")
@@ -164,51 +168,3 @@ def notify_before_one_day(reservation) -> FlexSendMessage:
     }
     }
     return FlexSendMessage(alt_text="預約提醒", contents=notify_text_json)
-
-def build_dynamic_reservation_reply(data: dict) -> str:
-    """
-    動態組合回覆文字：只顯示有提供的欄位
-    """
-    field_names = {
-        "name": "姓名",
-        "tel": "電話",
-        "date": "日期",
-        "預約目的": "目的",
-        "分店": "分店",
-        "memo": "備註"
-    }
-
-    reply_lines = ["✅ 已接收以下預約資訊："]
-    for key, label in field_names.items():
-        if key in data:
-            reply_lines.append(f"{label}：{data[key]}")
-
-    # 若 JSON 中沒有任何可顯示欄位，就提示使用者
-    if len(reply_lines) == 1:
-        reply_lines.append("⚠️ 目前沒有任何可顯示的欄位，請再確認格式！")
-
-    return "\n".join(reply_lines)
-
-def build_host_query_flex() -> FlexSendMessage:
-    flex_json = {
-        "type": "bubble",
-        "body": {
-            "type": "box",
-            "layout": "vertical",
-            "contents": [
-                { "type": "text", "text": "老闆娘選單", "weight": "bold", "size": "lg" },
-                {
-                    "type": "button",
-                    "action": { "type": "message", "label": "📅 查詢今日預約", "text": "查詢今天預約" },
-                    "style": "primary"
-                },
-                {
-                    "type": "button",
-                    "action": { "type": "message", "label": "📅 查詢明日預約", "text": "查詢明天預約" },
-                    "style": "primary"
-                },
-            ]
-        }
-    }
-
-    return FlexSendMessage(alt_text="老闆娘選單", contents=flex_json)
