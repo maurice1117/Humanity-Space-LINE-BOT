@@ -14,7 +14,11 @@ reservation_bot/
 │   ├── reservation_flow.py          # 格式化資料 + 儲存 JSON + 通知
 │   ├── reservation_draft.py         # 暫存草稿（記憶體內 dict）
 │   ├── response_builder.py          # 產生文字或 Flex 訊息格式
+    ├── timepicker.py               # 視覺化選擇日期
+    ├── daily_notify_text.py         #每日提醒
+        ├── search_date.py           #找明天的預約 
 │   └── host_control.py             # 驗證是否為管理者帳號
+
 ├── data/
 │   ├── reservation.json             # 所有預約紀錄會寫入這個 JSONL 檔
 │   └── RAG_enhancer.py              # 加入 RAG 處理

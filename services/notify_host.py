@@ -9,6 +9,6 @@ load_dotenv()
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 
 def notify_host_reservation(reservation: dict):
-    host_id = os.getenv("HOST_LINE_ID")
+    host_id = os.getenv("HOST_LINE_ID")       # get 老闆id
     message = build_reservation_flex(reservation)
-    line_bot_api.push_message(host_id, message)
+    line_bot_api.push_message(host_id, message)   ## 主動推撥給老闆

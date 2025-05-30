@@ -43,6 +43,128 @@ def build_reservation_flex(reservation: dict) -> FlexSendMessage:
 
     return FlexSendMessage(alt_text="預約審核通知", contents=flex_json)
 
+## NEW
+def notify_before_one_day(reservation) -> FlexSendMessage:
+    
+    name = reservation.get("name", "貴賓")
+    branch = reservation.get("branch", "TBD")
+    date = reservation.get("date", "日期未知")
+    start_time = reservation.get("start_time", "時間未知")
+    
+    notify_text_json = {
+    "type": "bubble",
+    "hero": {
+        "type": "image",
+        "url": "https://developers-resource.landpress.line.me/fx/img/01_3_movie.png",
+        "size": "full",
+        "aspectRatio": "20:13",
+        "aspectMode": "cover",
+        "action": {
+        "type": "uri",
+        "uri": "https://line.me/"
+        }
+    },
+    "body": {
+        "type": "box",
+        "layout": "vertical",
+        "spacing": "md",
+        "contents": [
+        {
+            "type": "text",
+            "text": "預約提醒",
+            "wrap": True,
+            "weight": "bold",
+            "gravity": "center",
+            "size": "xl"
+        },
+        {
+            "type": "text",
+            "text": f"親愛的貴賓{name}您好～",
+            "size": "md"
+        },
+        {
+            "type": "text",
+            "text": "以下是您的預約資訊："
+        },
+        {
+            "type": "box",
+            "layout": "vertical",
+            "margin": "lg",
+            "spacing": "sm",
+            "contents": [
+            {
+                "type": "box",
+                "layout": "baseline",
+                "spacing": "sm",
+                "contents": [
+                {
+                    "type": "text",
+                    "text": "分店",
+                    "color": "#aaaaaa",
+                    "size": "sm",
+                    "flex": 1
+                },
+                {
+                    "type": "text",
+                    "text": branch,
+                    "wrap": True,
+                    "color": "#666666",
+                    "size": "sm",
+                    "flex": 4
+                }
+                ]
+            },
+            {
+                "type": "box",
+                "layout": "baseline",
+                "spacing": "sm",
+                "contents": [
+                {
+                    "type": "text",
+                    "text": "日期",
+                    "color": "#aaaaaa",
+                    "size": "sm",
+                    "flex": 1
+                },
+                {
+                    "type": "text",
+                    "text": date,
+                    "wrap": True,
+                    "size": "sm",
+                    "color": "#666666",
+                    "flex": 4
+                }
+                ]
+            },
+            {
+                "type": "box",
+                "layout": "baseline",
+                "spacing": "sm",
+                "contents": [
+                {
+                    "type": "text",
+                    "text": "時間",
+                    "color": "#aaaaaa",
+                    "size": "sm",
+                    "flex": 1
+                },
+                {
+                    "type": "text",
+                    "text": start_time ,
+                    "wrap": True,
+                    "color": "#666666",
+                    "size": "sm",
+                    "flex": 4
+                }
+                ]
+            }
+            ]
+        }
+        ]
+    }
+    }
+    return FlexSendMessage(alt_text="預約提醒", contents=notify_text_json)
+
 def build_dynamic_reservation_reply(data: dict) -> str:
     """
     動態組合回覆文字：只顯示有提供的欄位

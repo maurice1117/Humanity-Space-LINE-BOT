@@ -3,6 +3,8 @@ from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from handlers.unified_router import register_handlers
+from services.notify_text import daily_evening_notify, hourly_check_notify
+from datetime import datetime
 import os
 
 load_dotenv()
@@ -60,6 +62,7 @@ def catch_unknown(path):
     return "Unknown route", 404
 
 
+    
 # === Entry point ===
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
