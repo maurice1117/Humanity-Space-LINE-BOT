@@ -95,7 +95,8 @@ def send_single_notification(reservation, message_builder, notification_type):
 
         date = reservation.get("date", "N/A")
         time = reservation.get("start_time", "N/A")
-        log_info(f"✅ {notification_type}發送成功: {user_id} - {date} {time}")
+        log_info(f"✅ {notification_type}發送成功: {user_id} - {date}_{time}")
+        print(message)
         return True
 
     except Exception as e:
