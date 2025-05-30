@@ -7,9 +7,9 @@ line-bot-sdk
 # 環境變數管理
 python-dotenv
 
-# Whisper 語音轉文字
-git+https://github.com/openai/whisper.git
-ffmpeg-python
+# # Whisper 語音轉文字
+# git+https://github.com/openai/whisper.git
+# ffmpeg-python
 
 # Together.ai API 模型支援
 openai

@@ -9,7 +9,7 @@ from services.date_extraction import extract_date_from_text
 from services.llm_service import extract_reservation_info
 
 # handler
-from handlers.audio_handler import handle_audio
+# from handlers.audio_handler import handle_audio
 from handlers.text_handler import handle_text
 from handlers.host_command_handlers import (handle_confirm_add, handle_modify, handle_delete, handle_unknown_command, handle_query_by_date, handle_query_by_name, handle_query_for_today
                                    , handle_query_for_tomorrow, reply_with_error)
@@ -33,10 +33,9 @@ def handle_host_reply(event):
     if not is_host(event.source.user_id): # 可以暫時刪掉not用來測試guest的邏輯
         # 非主辦人交給 handle_text 處理（避免吞掉事件）
         print("非主辦人")
-        try:
-            handle_text(event)
-        except:
-            handle_audio(event)
+        handle_text(event)
+        # except:
+        #     handle_audio(event)
         return
 
     # 取得輸入文字（語音→文字）
@@ -57,9 +56,9 @@ def handle_host_reply(event):
     handle_unknown_command(event)
 
 def get_event_text(event):
-    if isinstance(event.message, AudioMessage):
-        return handle_audio(event).strip()
-    elif isinstance(event.message, TextMessage):
+    # if isinstance(event.message, AudioMessage):
+    #     return handle_audio(event).strip()
+    if isinstance(event.message, TextMessage):
         return event.message.text.strip()
     return None
 

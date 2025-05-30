@@ -61,4 +61,4 @@ def reply_to_user(event, message):
         print(f"❌ 回覆使用者失敗：{e}")
 
 def handle_default_response(event):
-    reply_to_user(event, "我們已收到您的文字訊息")
+    reply_to_user(event, "若要預約，請點選下方預約按鈕，謝謝您😊 \n 若您有其他需求，我們會盡速回覆!")
