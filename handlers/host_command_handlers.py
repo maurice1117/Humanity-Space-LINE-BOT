@@ -52,14 +52,14 @@ def handle_confirm_add(event, text):
     reply_with_error(event, reply_text)
 
 def handle_modify(event):
-    from services.reservation_draft import get_text_draft
+    from services.reservation_draft import get_draft
 
     try:
-        draft_text = get_text_draft(event.source.user_id)
-        print(f"[純文字草稿內容] {draft_text}")
+        re = get_draft(event.source.user_id)
+        print(f"[純文字草稿內容] {re}")
         reply_text = (
             "📝 修改預約：\n\n"
-            f"{draft_text}\n"
+            f"{re.get('name','')} {re.get('start_time','')} {re.get('tel','')} {re.get('memo','')}\n"
         )
     except Exception as e:
         reply_text = f"⚠️ 修改預約失敗：{e}"
