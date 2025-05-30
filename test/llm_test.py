@@ -1,11 +1,15 @@
-import openai
+from openai import OpenAI
 import os
 from dotenv import load_dotenv
 
 # 載入 .env 環境變數
 load_dotenv()
-openai.api_base = "https://api.together.xyz/v1"
-openai.api_key = os.getenv("TOGETHER_API_KEY")
+
+# 初始化 OpenAI 客戶端（針對 Together AI）
+client = OpenAI(
+    api_key=os.getenv("TOGETHER_API_KEY"),
+    base_url="https://api.together.xyz/v1"
+)
 
 # 測試文字
 sample_text = "我是林小姐，電話是0912345678，想預約5月1日下午三點，吃素，怕辣。"
@@ -27,10 +31,10 @@ prompt = f"""
 """
 
 # 呼叫 Together AI 的 Mistral 模型
-response = openai.ChatCompletion.create(
+response = client.chat.completions.create(
     model="mistralai/Mistral-7B-Instruct-v0.1",
     messages=[{"role": "user", "content": prompt}]
 )
 
 # 印出模型回傳內容
-print(response["choices"][0]["message"]["content"])
+print(response.choices[0].message.content)
