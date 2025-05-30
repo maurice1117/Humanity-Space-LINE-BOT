@@ -4,7 +4,8 @@ reservation_bot/
 │   ├── unified_router.py            # 註冊 Text、Audio、Admin 訊息
 │   ├── text_handler.py              # 處理使用者文字訊息
 │   ├── audio_handler.py             # 處理語音訊息 → Whisper 轉文字
-│   └── admin_reply_handler.py       # 管理者的審核、修改、刪除與語音備註
+│   ├── host_reply_handler.py       # 管理者的訊息處理都在這
+|   └── host_command_handlers       # 管理者訊息處理背後的function
 ├── services/                         # 處理邏輯功能模組
 │   ├── whisper_service.py           # Whisper 語音轉文字工具
 │   ├── llm_service.py               # 判斷是否為預約 + 抽取資料
