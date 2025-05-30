@@ -4,8 +4,8 @@ import logging
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from linebot import LineBotApi
-from response_builder import notify_before_one_day
-from search_date import search_tomorrow_reservations, search_two_hour_before_reservations
+from .response_builder import notify_before_one_day
+from .search_date import search_tomorrow_reservations, search_two_hour_before_reservations
 load_dotenv()
 
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
@@ -167,14 +167,12 @@ def cleanup_old_notifications(days_to_keep=30):
         log_error(f"清理通知記錄失敗: {e}")
 
 
-# 測試主程式
 if __name__ == "__main__":
-    log_info("=== 測試通知功能 ===")
-
-    daily_count = daily_evening_notify()
-
-    log_info("\n" + "=" * 50 + "\n")
-
-    hourly_count = hourly_check_notify()
-
-    log_info(f"\n總計發送: {daily_count + hourly_count} 條通知")
+    import sys
+    command = sys.argv[1] if len(sys.argv) > 1 else None
+    if command == "daily":
+        daily_evening_notify()
+    elif command == "hourly":
+        hourly_check_notify()
+    else:
+        print("請使用參數: daily 或 hourly")
