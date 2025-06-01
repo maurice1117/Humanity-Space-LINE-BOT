@@ -1,13 +1,13 @@
 # 用來存放老闆娘的指令處理邏輯的functions
 # 服務層
 from services.reservation_draft import (
-    confirm_draft, update_draft, delete_draft, get_text_draft, save_text_draft
+    confirm_draft, update_draft, delete_draft, get_text_draft, save_text_draft,get_draft
 )
 from services.reservation_flow import finalize_and_save
 from services.response_builder import text_reply
 from services.date_extraction import extract_date_from_text
 from services.llm_service import extract_reservation_info
-
+from services.notify_customer import notify_user_reservation_confirmed
 # linebot
 from linebot import LineBotApi
 from linebot.exceptions import LineBotApiError
@@ -20,36 +20,61 @@ import re
 
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 
-def handle_confirm_add(event, text):
-    """
-    處理確認新增預約的指令
-    """
+
+def handle_confirm_add(event, draft_id):
     try:
-        # 確保 text 不為空，並嘗試解析
-        # if not text:
-        #     raise ValueError("輸入的文字內容為空，無法處理預約資訊。")
+        # 讀取該使用者的暫存預約草稿
+        draft = get_draft(draft_id)
+        if not draft:
+            raise ValueError("找不到該使用者的預約草稿")
 
-        # reservation = extract_reservation_info(text)
-        # if not reservation or not isinstance(reservation, dict):
-        #     raise ValueError("無法從輸入文字中解析出有效的預約資訊。")
+        draft["confirmed"] = True
+        user_id = draft.get("user_id", "unknown")
+        # 更新暫存草稿（JSON中 confirm: false → true）
+        update_draft(draft_id=draft_id, **draft)
 
-        # print(f"[純文字草稿內容] {text}")
-        # reservation["user_id"] = event.source.user_id
-        # reservation["confirmed"] = True
-        # finalize_and_save(event.source.user_id, reservation)
-
-        # from services.reservation_draft import update_draft
-        # update_draft(user_id=event.source.user_id, **{k: v for k, v in reservation.items() if k != "user_id"})
+        # 最終存檔
+        finalize_and_save(user_id, draft)    # user id 拿來通知
 
         reply_text = "✅ 已新增預約並通知使用者"
+
     except Exception as e:
         import traceback
         print(f"錯誤類型：{type(e).__name__}")
         print(f"錯誤詳情：{traceback.format_exc()}")
         reply_text = f"⚠️ 新增預約失敗：{e}"
 
-    # 回覆錯誤或成功訊息
     reply_with_error(event, reply_text)
+# def handle_confirm_add(event, text):
+#     """
+#     處理確認新增預約的指令
+#     """
+#     try:
+#         # 確保 text 不為空，並嘗試解析
+#         # if not text:
+#         #     raise ValueError("輸入的文字內容為空，無法處理預約資訊。")
+
+#         # reservation = extract_reservation_info(text)
+#         # if not reservation or not isinstance(reservation, dict):
+#         #     raise ValueError("無法從輸入文字中解析出有效的預約資訊。")
+
+#         # print(f"[純文字草稿內容] {text}")
+#         # reservation["user_id"] = event.source.user_id
+#         # reservation["confirmed"] = True
+#         # finalize_and_save(event.source.user_id, reservation)
+
+#         # from services.reservation_draft import update_draft
+#         # update_draft(user_id=event.source.user_id, **{k: v for k, v in reservation.items() if k != "user_id"})
+
+#         reply_text = "✅ 已新增預約並通知使用者"
+#     except Exception as e:
+#         import traceback
+#         print(f"錯誤類型：{type(e).__name__}")
+#         print(f"錯誤詳情：{traceback.format_exc()}")
+#         reply_text = f"⚠️ 新增預約失敗：{e}"
+
+#     # 回覆錯誤或成功訊息
+#     reply_with_error(event, reply_text)
 
 def handle_modify(event):
     from services.reservation_draft import get_draft
