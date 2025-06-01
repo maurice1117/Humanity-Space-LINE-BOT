@@ -18,7 +18,12 @@ def save_json(filename, data):
 
 
 def generate_draft_id(user_id, date, start_time):
-    return f"{user_id}_{date}_{start_time}"
+    # 把 date 裡的 / 全部換成 -
+    safe_date = date.replace("/", "-")
+    # 把 start_time 的冒號換成 -
+    safe_start_time = start_time.replace(":", "-")
+    return f"{user_id}_{safe_date}_{safe_start_time}"
+
 
 # -------- 草稿操作 --------
 def save_draft(user_id, draft_data):
@@ -30,7 +35,7 @@ def save_draft(user_id, draft_data):
 
     draft_data["user_id"] = user_id  # ⚠️ 確保草稿中有 user_id
     draft_data["draft_id"] = draft_id  # ⚠️ 寫入 draft_id 欄位
-    
+
     # 檢查是否已有同樣的 draft_id，更新它
     drafts = [d for d in drafts if d["draft_id"] != draft_id]
     drafts.append(draft_data)
@@ -38,16 +43,19 @@ def save_draft(user_id, draft_data):
 
 def update_draft(draft_id, **kwargs):
     drafts = load_json(DRAFT_FILE)
-    for draft in drafts:
-        if draft["draft_id"] == draft_id:
-            draft.update(kwargs)
-            draft = pad_reservation(draft)
+    for i, draft in enumerate(drafts):
+        if draft.get("draft_id") == draft_id:
+            kwargs.pop("draft_id", None)  # 移除避免重複
+            drafts[i].update(kwargs)
+            drafts[i] = pad_reservation(drafts[i])
             break
     save_json(DRAFT_FILE, drafts)
 
 def get_draft(draft_id):
     drafts = load_json(DRAFT_FILE)
     for draft in drafts:
+        print(draft["draft_id"])
+        print(draft_id)
         if draft["draft_id"] == draft_id:
             return draft
     return {}

@@ -29,31 +29,30 @@ def is_reservation_request(text: str) -> bool:
 
 def extract_reservation_info(text: str) -> dict:
     print("🔍 Together.ai 正在擷取預約資訊...")
+
     prompt = f'''
-請根據以下使用者訊息，擷取預約資訊並回傳 JSON 格式，包含：
+請從下列使用者訊息中擷取預約資訊，並**只回傳 JSON 格式結果**，不要加入其他說明或程式碼，格式如下：
 - name（姓名）
 - tel（電話）
 - date（預約日期，格式"YYYY/MM/DD"）
-- start_time（預約時間，格式"hh:mm:ss，24小時制）
+- start_time（預約時間，格式"hh:mm:ss"，24小時制）
 - branch（分店名稱，如果有的話，否則留空）
 - memo（備註：如吃素、過敏、生日）
->>>>>>> 7b7585b (date in LLM, JSON alignment)
+
 訊息如下：
 {text}
 
-請回傳以下格式：
+請回傳以下格式（不要多加註解）：
 {{
   "name": "...",
   "tel": "...",
   "date": "...",
   "start_time": "...",
-  "branch": "...",  # 如果有分店資訊，請填寫，否則留空
-  "memo": "...",
-
->>>>>>> 7b7585b (date in LLM, JSON alignment)
+  "branch": "...",
+  "memo": "..."
 }}
 
-若找不到資訊，請回傳：False
+若無法擷取任何資訊，請回傳 False（注意：是字串 False，不是 JSON）
 '''
 
     try:
@@ -61,25 +60,45 @@ def extract_reservation_info(text: str) -> dict:
             model="mistralai/Mistral-7B-Instruct-v0.1",
             messages=[{"role": "user", "content": prompt}]
         )
+
         result = response.choices[0].message.content.strip()
+        print(f"🧾 Together.ai 回傳內容：\n{result}")
 
         if result.lower() == "false":
+            print("📭 無法擷取資訊")
             return {
                 "name": "",
                 "tel": "",
                 "date": "",
+                "start_time": "",
+                "branch": "",
                 "memo": ""
             }
 
-        # 嘗試解析 JSON
+        # 嘗試抽取 JSON 部分
         json_start = result.find('{')
         json_end = result.rfind('}') + 1
-        json_str = result[json_start:json_end]
-        return json.loads(json_str)
+        if json_start == -1 or json_end == -1:
+            raise ValueError("找不到 JSON 區段")
 
+        json_str = result[json_start:json_end]
+        data = json.loads(json_str)
+
+        # 標準化：確保每個欄位都存在
+        default_fields = ["name", "tel", "date", "start_time", "branch", "memo"]
+        for field in default_fields:
+            if field not in data:
+                data[field] = ""
+
+        return data
 
     except Exception as e:
         print(f"⚠️ 擷取 JSON 失敗：{e}")
+        # if event:
+        #     line_bot_api.reply_message(
+        #         event.reply_token,
+        #         TextSendMessage(text="🌟 看起來您有預約需求，但目前無法辨識完整資訊，請回傳以下格式\n姓名:\n電話:\n預約日期與時間(例: 2025/6/1 18:00):\n其他:")
+        #     )
         return {
             "name": "",
             "tel": "",

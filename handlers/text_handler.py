@@ -38,10 +38,14 @@ def handle_reservation_request(event, text, user_id):
         
         # 產生唯一 draft_id
         date = reservation.get("date", "unknown")
+        safe_date = date.replace("/", "-")
         start_time = reservation.get("start_time", "unknown")
-        draft_id = f"{user_id}_{date}_{start_time}"
+        safe_start_time = start_time.replace(":", "-")
+        draft_id = f"{user_id}_{safe_date}_{safe_start_time}"
         reservation["draft_id"] = draft_id  #存在reservation
         
+        print(f"draft_id = {draft_id}")
+        print(f"reservation = {reservation}")
         # 儲存預約資訊
         save_reservation_draft(user_id, reservation, text)   # draft_id 在裡面
         # 回覆使用者

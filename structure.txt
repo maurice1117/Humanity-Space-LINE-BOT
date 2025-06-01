@@ -15,15 +15,15 @@ reservation_bot/
 │   ├── reservation_draft.py         # 暫存草稿（記憶體內 dict）
 │   ├── response_builder.py          # 產生文字或 Flex 訊息格式
     ├── timepicker.py               # 視覺化選擇日期
-    ├── daily_notify_text.py         #每日提醒
-        ├── search_date.py           #找明天的預約 
+    ├── notify_text.py               # 發送提醒的主要邏輯
+        ├── search_date.py           # 找明天以及兩小時後的預約
 │   └── host_control.py             # 驗證是否為管理者帳號
 
 ├── data/
 │   ├── reservation.json             # 所有預約紀錄會寫入這個 JSONL 檔
 │   ├── RAG_enhancer.py              # 加入 RAG 處理
-│   ├── notifing.log                    # 預約發送的log的json會存在這
-│   └── notification_log.json         # 預約發送的log的json會存在這
+│   ├── notifing.log                 # 發送成功或失敗的log
+│   └── notification_log.json        # 需要被預約發送的log
 ├── static/audio/                    # 暫存下載語音檔用於 Whisper 轉換
 ├── .env                             # 儲存 LINE Channel Token、管理者 ID
 ├── requirements.txt                 # 所有套件需求

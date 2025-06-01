@@ -15,6 +15,6 @@ def save_reservation_to_json(data: dict, path="data/reservation.json"):
         json.dump(data, f, ensure_ascii=False)
         f.write("\n")
 
-def finalize_and_save(user_id, draft_id, reservation_data):
+def finalize_and_save(user_id,reservation_data):
     save_reservation_to_json(reservation_data)
     notify_user_reservation_confirmed(user_id, reservation_data)
