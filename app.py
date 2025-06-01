@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from flask import Flask, request, abort
+from flask import Flask, request, abort, jsonify
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from handlers.unified_router import register_handlers
@@ -61,8 +61,65 @@ def catch_unknown(path):
     print(f"⚠️ 未知路由被打到了：/{path} ({request.method})")
     return "Unknown route", 404
 
+# -------------------------------------
+@app.route("/test/daily-notify", methods=["GET"])
+def test_daily_notify():
+    try:
+        print("🧪 開始測試每日晚間通知...")
+        success_count = daily_evening_notify()
+        
+        result = {
+            "status": "success",
+            "message": "每日晚間通知測試完成",
+            "notifications_sent": success_count,
+            "timestamp": str(datetime.now())
+        }
+        
+        print(f"✅ 測試完成: {result}")
+        return jsonify(result), 200
+        
+    except Exception as e:
+        import traceback
+        error_msg = f"每日通知測試失敗: {str(e)}"
+        print(f"❌ {error_msg}")
+        traceback.print_exc()
+        
+        return jsonify({
+            "status": "error",
+            "message": error_msg,
+            "timestamp": str(datetime.now())
+        }), 500
 
+print("15. 路由設定完成")
+
+@app.route("/test/hour-notify", methods=["GET"])
+def test_hour_notify():
+    try:
+        print("🧪 開始測試小時通知...")
+        success_count = hourly_check_notify()
+        
+        result = {
+            "status": "success",
+            "message": "小時通知測試完成",
+            "notifications_sent": success_count,
+            "timestamp": str(datetime.now())
+        }
+        
+        print(f"✅ 測試完成: {result}")
+        return jsonify(result), 200
+        
+    except Exception as e:
+        import traceback
+        error_msg = f"小時通知測試失敗: {str(e)}"
+        print(f"❌ {error_msg}")
+        traceback.print_exc()
+        
+        return jsonify({
+            "status": "error",
+            "message": error_msg,
+            "timestamp": str(datetime.now())
+        }), 500
     
 # === Entry point ===
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+port = int(os.getenv("PORT", 5000))  # 默認使用 5000 埠
+app.run(host="0.0.0.0", port=port, debug=True)
