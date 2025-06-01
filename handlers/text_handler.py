@@ -32,17 +32,42 @@ def handle_reservation_request(event, text, user_id):
         reservation = extract_reservation_info(text)    # 擷取預約資訊並回傳 JSON 格式
         print(f"🔍 提取到的預約資訊: {reservation}")
         reservation['user_id'] = user_id
-        reservation["confirmed"] = True
-
+        
+        reservation["confirmed"] = False
+        # reservation["confirmed"] = True
+        
+        # 產生唯一 draft_id
+        date = reservation.get("date", "unknown")
+        safe_date = date.replace("/", "-")
+        start_time = reservation.get("start_time", "unknown")
+        safe_start_time = start_time.replace(":", "-")
+        draft_id = f"{user_id}_{safe_date}_{safe_start_time}"
+        reservation["draft_id"] = draft_id  #存在reservation
+        
+        print(f"draft_id = {draft_id}")
+        print(f"reservation = {reservation}")
         # 儲存預約資訊
-        save_reservation_draft(user_id, reservation, text)
-        finalize_and_save(event.source.user_id, reservation)          # 存進json # 順便告訴user 預約已成功
-
-        # 通知店主
-        notify_host_reservation(reservation)
-
+        save_reservation_draft(user_id, reservation, text)   # draft_id 在裡面
         # 回覆使用者
         reply_to_user(event, "✅ 您的預約資訊已收到，請稍候老闆娘確認")
+
+        # 通知店主
+        notify_host_reservation(reservation)       
+
+
+
+
+        
+        # reservation["confirmed"] = True
+        # # 儲存預約資訊
+        # save_reservation_draft(user_id, reservation, text)
+        # finalize_and_save(event.source.user_id, reservation)          # 存進json # 順便告訴user 預約已成功
+
+        # # 通知店主
+        # notify_host_reservation(reservation)
+
+        # # 回覆使用者
+        # reply_to_user(event, "✅ 您的預約資訊已收到，請稍候老闆娘確認")
     except Exception as e:
         print(f"❌ 提取預約資訊失敗：{e}")
         reply_to_user(event, "🌟 看起來您有預約需求，但目前無法辨識完整資訊，請回傳以下格式\n姓名:\n電話:\n預約日期與時間(例: 2025/6/1 18:00):\n其他:")        
@@ -62,3 +87,4 @@ def reply_to_user(event, message):
 
 def handle_default_response(event):
     reply_to_user(event, "若要預約，請點選下方預約按鈕，謝謝您😊 \n 若您有其他需求，我們會盡速回覆!")
+    

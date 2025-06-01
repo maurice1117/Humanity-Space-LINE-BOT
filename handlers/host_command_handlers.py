@@ -1,17 +1,17 @@
 # 用來存放老闆娘的指令處理邏輯的functions
 # 服務層
 from services.reservation_draft import (
-    confirm_draft, update_draft, delete_draft, get_text_draft, save_text_draft
+    update_draft, delete_draft, get_text_draft, save_text_draft,get_draft
 )
-from services.reservation_flow import finalize_and_save
+from services.reservation_flow import finalize_and_save, finalize_and_save_modify
 from services.response_builder import text_reply
 from services.date_extraction import extract_date_from_text
 from services.llm_service import extract_reservation_info
-
+from services.notify_customer import notify_user_reservation_confirmed
 # linebot
 from linebot import LineBotApi
 from linebot.exceptions import LineBotApiError
-
+from linebot.models import TextSendMessage, FlexSendMessage
 # 內建
 from datetime import datetime, timedelta
 import json
@@ -20,61 +20,136 @@ import re
 
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 
-def handle_confirm_add(event, text):
-    """
-    處理確認新增預約的指令
-    """
+
+def handle_confirm_add(event, draft_id):
     try:
-        # 確保 text 不為空，並嘗試解析
-        # if not text:
-        #     raise ValueError("輸入的文字內容為空，無法處理預約資訊。")
+        print(draft_id)
+        # 讀取該使用者的暫存預約草稿
+        draft = get_draft(draft_id)
+        if not draft:
+            raise ValueError("找不到該使用者的預約草稿")
 
-        # reservation = extract_reservation_info(text)
-        # if not reservation or not isinstance(reservation, dict):
-        #     raise ValueError("無法從輸入文字中解析出有效的預約資訊。")
-
-        # print(f"[純文字草稿內容] {text}")
-        # reservation["user_id"] = event.source.user_id
-        # reservation["confirmed"] = True
-        # finalize_and_save(event.source.user_id, reservation)
-
-        # from services.reservation_draft import update_draft
-        # update_draft(user_id=event.source.user_id, **{k: v for k, v in reservation.items() if k != "user_id"})
+        draft["confirmed"] = True
+        user_id = draft.get("user_id", "unknown")
+        draft.pop("draft_id", None)  # ✅ 加上這行避免重複
+        update_draft(draft_id=draft_id, **draft)
+        
+        # 最終存檔
+        finalize_and_save(user_id, draft)    # user id 拿來通知
 
         reply_text = "✅ 已新增預約並通知使用者"
+
     except Exception as e:
         import traceback
         print(f"錯誤類型：{type(e).__name__}")
         print(f"錯誤詳情：{traceback.format_exc()}")
         reply_text = f"⚠️ 新增預約失敗：{e}"
 
-    # 回覆錯誤或成功訊息
     reply_with_error(event, reply_text)
+    
 
-def handle_modify(event):
+# def handle_confirm_add(event, text):
+#     """
+#     處理確認新增預約的指令
+#     """
+#     try:
+#         # 確保 text 不為空，並嘗試解析
+#         # if not text:
+#         #     raise ValueError("輸入的文字內容為空，無法處理預約資訊。")
+
+#         # reservation = extract_reservation_info(text)
+#         # if not reservation or not isinstance(reservation, dict):
+#         #     raise ValueError("無法從輸入文字中解析出有效的預約資訊。")
+
+#         # print(f"[純文字草稿內容] {text}")
+#         # reservation["user_id"] = event.source.user_id
+#         # reservation["confirmed"] = True
+#         # finalize_and_save(event.source.user_id, reservation)
+
+#         # from services.reservation_draft import update_draft
+#         # update_draft(user_id=event.source.user_id, **{k: v for k, v in reservation.items() if k != "user_id"})
+
+#         reply_text = "✅ 已新增預約並通知使用者"
+#     except Exception as e:
+#         import traceback
+#         print(f"錯誤類型：{type(e).__name__}")
+#         print(f"錯誤詳情：{traceback.format_exc()}")
+#         reply_text = f"⚠️ 新增預約失敗：{e}"
+
+#     # 回覆錯誤或成功訊息
+#     reply_with_error(event, reply_text)
+
+def handle_modify(event, draft_id):
     from services.reservation_draft import get_draft
 
     try:
-        re = get_draft(event.source.user_id)
-        print(f"[純文字草稿內容] {re}")
-        reply_text = (
-            "📝 修改預約：\n\n"
-            f"{re.get('name','')} {re.get('start_time','')} {re.get('tel','')} {re.get('memo','')}\n"
-        )
+        draft = get_draft(draft_id)
+        print(f"[純文字草稿內容] {draft}")
+        
+        name = draft.get("name", "")
+        date = draft.get("date", "")
+        time = draft.get("start_time", "")
+        tel = draft.get("tel", "")
+        memo = draft.get("memo", "")
+        
+        tip = "請直接複製以下範例並再傳回更改後內容：\n姓名\n日期\n時間\n電話\n備註\nId"
+        example = f"{name}\n{date}\n{time}\n{tel}\n{memo}\n{draft_id}"
+        reply_text = f"{tip}\n\n修改預約\n{example}"
+        
     except Exception as e:
         reply_text = f"⚠️ 修改預約失敗：{e}"
 
     reply_with_error(event, reply_text)
 
-def handle_delete(event):
+def handle_modify_input(event, text):
+    # 主持人貼回修改後的文字，這邊負責解析並更新草稿
+    lines = text.strip().split("\n")
+    if len(lines) < 6:
+        line_bot_api.reply_message(event.reply_token, text_reply("格式錯誤，請依照範例提供所有欄位及ID。"))
+        return
+
+    # 取最後一行當 draft_id
+    draft_id = lines[-1].strip()
+    print(draft_id)
+    print("解析的 draft_id:", repr(draft_id))  # 用 repr 看看是不是有隱藏空白或換行
+    # 取前5行當各欄位內容
+    name, date, time, tel, memo = lines[:5]
+
+    from services.reservation_draft import get_draft, update_draft
+
+    draft = get_draft(draft_id)
+    if not draft:
+        line_bot_api.reply_message(event.reply_token, text_reply(f"找不到對應的預約草稿，請確認ID是否正確。\n（嘗試ID: {draft_id}）"))
+        return
+    
+    # 更新欄位
+    draft["name"] = name
+    draft["date"] = date
+    draft["start_time"] = time
+    draft["tel"] = tel
+    draft["memo"] = memo
+    user_id = draft["user_id"]
+    draft.pop("draft_id", None)  # ✅ 加上這行避免重複
+    update_draft(draft_id=draft_id, **draft)
+    finalize_and_save_modify(user_id, draft)    # user id 拿來通知
+    line_bot_api.reply_message(event.reply_token, text_reply("✅ 預約內容已更新，請確認後再進行新增或其他操作。"))
+
+def handle_delete(event, draft_id):
     from services.reservation_draft import delete_draft
 
+    draft = get_draft(draft_id)
+    user_id = draft["user_id"]
+    date = draft["date"] 
+    time= draft["start_time"]  
     try:
-        delete_draft(event.source.user_id)
+        delete_draft(draft_id)
         reply_text = "🗑 訂單已刪除"
     except Exception as e:
         reply_text = f"⚠️ 刪除訂單失敗：{e}"
-
+    text = f"🗑 您的訂單：\n日期：{date}\n時間： {time}\n訂單已被刪除"
+    
+    message = TextSendMessage(text=text)
+    line_bot_api.push_message(user_id, message)
     reply_with_error(event, reply_text)
 
 def handle_unknown_command(event):
@@ -197,28 +272,28 @@ def handle_query_by_name(event, query_text):
 
     reply_with_error(event, reply_text)
 
-# 在傳送確認預約後，使用按鈕選取分店
-def handle_select_branch(event, text):
-    """
-    處理選擇分店的指令
-    :param event: LINE 事件物件
-    :param text: 使用者輸入的文字
-    """
-    try:
-        # 假設 text 是分店名稱
-        branch_name = text.strip()
-        if not branch_name:
-            raise ValueError("請提供有效的分店名稱。")
+# # 在傳送確認預約後，使用按鈕選取分店
+# def handle_select_branch(event, text):
+#     """
+#     處理選擇分店的指令
+#     :param event: LINE 事件物件
+#     :param text: 使用者輸入的文字
+#     """
+#     try:
+#         # 假設 text 是分店名稱
+#         branch_name = text.strip()
+#         if not branch_name:
+#             raise ValueError("請提供有效的分店名稱。")
 
-        # 儲存分店資訊到暫存資料中
-        user_id = event.source.user_id
-        save_text_draft(user_id, f"選擇分店: {branch_name}")
+#         # 儲存分店資訊到暫存資料中
+#         user_id = event.source.user_id
+#         save_text_draft(user_id, f"選擇分店: {branch_name}")
 
-        reply_text = f"✅ 已選擇分店：{branch_name}"
-    except Exception as e:
-        reply_text = f"⚠️ 選擇分店失敗：{e}"
+#         reply_text = f"✅ 已選擇分店：{branch_name}"
+#     except Exception as e:
+#         reply_text = f"⚠️ 選擇分店失敗：{e}"
 
-    reply_with_error(event, reply_text)
+#     reply_with_error(event, reply_text)
 
 def reply_with_error(event, message):
     try:
@@ -252,3 +327,4 @@ def format_query_text(reservations, title):
             f"   備註：{r.get('memo', '')}\n"
         )
     return reply_text
+

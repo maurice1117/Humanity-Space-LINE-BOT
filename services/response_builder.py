@@ -11,7 +11,9 @@ def build_reservation_flex(reservation: dict) -> FlexSendMessage:
     start_time = reservation.get("start_time", "未提供")
     branch = reservation.get("branch", "未提供")
     memo = reservation.get("memo", "無")
-
+    user_id = reservation.get("user_id", "unknown")
+    draft_id = reservation.get("draft_id", "unknown")
+    
     flex_json = {
         "type": "bubble",
         "body": {
@@ -28,17 +30,29 @@ def build_reservation_flex(reservation: dict) -> FlexSendMessage:
                 { "type": "text", "text": f"備註：{memo}" },
                 {
                     "type": "button",
-                    "action": { "type": "message", "label": "✅ 確認新增", "text": "確認新增" },
+                    "action": {
+                        "type": "postback",
+                        "label": "✅ 確認新增",
+                        "data": f"action=select_branch&draft_id={draft_id}"
+                    },
                     "style": "primary"
                 },
                 {
                     "type": "button",
-                    "action": { "type": "message", "label": "📑 修改", "text": "修改" },
+                    "action": {
+                        "type": "postback",
+                        "label": "📑 修改",
+                        "data": f"action=edit&draft_id={draft_id}"
+                    },
                     "style": "secondary"
                 },
                 {
                     "type": "button",
-                    "action": { "type": "message", "label": "❌ 刪除", "text": "刪除" },
+                    "action": {
+                        "type": "postback",
+                        "label": "❌ 刪除",
+                        "data": f"action=delete&draft_id={draft_id}"
+                    },
                     "style": "secondary"
                 }
             ]
@@ -168,3 +182,37 @@ def notify_before_one_day(reservation) -> FlexSendMessage:
     }
     }
     return FlexSendMessage(alt_text="預約提醒", contents=notify_text_json)
+
+def build_branch_selection_flex(draft_id: str) -> FlexSendMessage:
+    return FlexSendMessage(
+        alt_text="請選擇分店",
+        contents={
+            "type": "bubble",
+            "body": {
+                "type": "box",
+                "layout": "vertical",
+                "spacing": "md",
+                "contents": [
+                    {"type": "text", "text": "請選擇分店", "weight": "bold", "size": "lg"},
+                    {
+                        "type": "button",
+                        "action": {
+                            "type": "postback",
+                            "label": "A 分店",
+                            "data": f"action=confirm&draft_id={draft_id}&branch=A分店"
+                        },
+                        "style": "primary"
+                    },
+                    {
+                        "type": "button",
+                        "action": {
+                            "type": "postback",
+                            "label": "B 分店",
+                            "data": f"action=confirm&draft_id={draft_id}&branch=B分店"
+                        },
+                        "style": "primary"
+                    }
+                ]
+            }
+        }
+    )

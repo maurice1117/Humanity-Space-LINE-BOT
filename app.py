@@ -90,7 +90,6 @@ def test_daily_notify():
             "timestamp": str(datetime.now())
         }), 500
 
-print("15. 路由設定完成")
 
 @app.route("/test/hour-notify", methods=["GET"])
 def test_hour_notify():
