@@ -11,7 +11,7 @@ from services.notify_customer import notify_user_reservation_confirmed
 # linebot
 from linebot import LineBotApi
 from linebot.exceptions import LineBotApiError
-
+from linebot.models import TextSendMessage, FlexSendMessage
 # 內建
 from datetime import datetime, timedelta
 import json
@@ -137,12 +137,19 @@ def handle_modify_input(event, text):
 def handle_delete(event, draft_id):
     from services.reservation_draft import delete_draft
 
+    draft = get_draft(draft_id)
+    user_id = draft["user_id"]
+    date = draft["date"] 
+    time= draft["start_time"]  
     try:
         delete_draft(draft_id)
         reply_text = "🗑 訂單已刪除"
     except Exception as e:
         reply_text = f"⚠️ 刪除訂單失敗：{e}"
-
+    text = f"🗑 您的訂單：\n日期：{date}\n時間： {time}\n訂單已被刪除"
+    
+    message = TextSendMessage(text=text)
+    line_bot_api.push_message(user_id, message)
     reply_with_error(event, reply_text)
 
 def handle_unknown_command(event):
