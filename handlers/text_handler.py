@@ -45,7 +45,7 @@ def handle_reservation_request(event, text, user_id):
         reply_to_user(event, "✅ 您的預約資訊已收到，請稍候老闆娘確認")
     except Exception as e:
         print(f"❌ 提取預約資訊失敗：{e}")
-        reply_to_user(event, "🌟 看起來您有預約需求，但目前無法辨識完整資訊，請回傳以下格式\n姓名:\n電話:\n預約日期與時間:\n其他:")        
+        reply_to_user(event, "🌟 看起來您有預約需求，但目前無法辨識完整資訊，請回傳以下格式\n姓名:\n電話:\n預約日期與時間(例: 2025/6/1 18:00):\n其他:")        
 
 def save_reservation_draft(user_id, reservation, text):
     save_draft(user_id, reservation)

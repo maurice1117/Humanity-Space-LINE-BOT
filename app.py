@@ -64,5 +64,5 @@ def catch_unknown(path):
 
     
 # === Entry point ===
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+port = int(os.getenv("PORT", 5000))  # 默認使用 5000 埠
+app.run(host="0.0.0.0", port=port, debug=True)

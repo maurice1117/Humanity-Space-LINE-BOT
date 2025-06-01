@@ -71,9 +71,9 @@ def handle_delete(event):
 
     try:
         delete_draft(event.source.user_id)
-        reply_text = "🗑 草稿已刪除"
+        reply_text = "🗑 訂單已刪除"
     except Exception as e:
-        reply_text = f"⚠️ 刪除草稿失敗：{e}"
+        reply_text = f"⚠️ 刪除訂單失敗：{e}"
 
     reply_with_error(event, reply_text)
 
@@ -81,6 +81,7 @@ def handle_unknown_command(event):
     reply_text = (
         "您目前角色為老闆娘，請使用以下指令進行操作：\n"
         "- 查詢本日預約\n"
+        "- 查詢明日預約\n"
         "- 查詢預約 [日期] (ex. 查詢預約 2025/5/15)\n"
         "- 查詢客人 [名字] (ex. 查詢客人 小明)\n"
     )
@@ -113,12 +114,8 @@ def handle_query_for_today(event):
             except Exception as e:
                 print(f"資料解析錯誤: {e}")
 
-    if not reservations:
-        reply_text = "今天尚無預約紀錄。"
-    else:
-        reply_text = "今日預約如下：\n"
-        for r in reservations:
-            reply_text += f"{r.get('name','')} {r.get('start_time','')} {r.get('tel','')} {r.get('memo','')}\n"
+    # 使用共用函數格式化回傳訊息
+    reply_text = format_query_text(reservations, f"「{today}」")
 
     reply_with_error(event, reply_text)
 
@@ -151,12 +148,8 @@ def handle_query_for_tomorrow(event):
             except Exception as e:
                 print(f"資料解析錯誤: {e}")
 
-    if not reservations:
-        reply_text = "明天尚無預約紀錄。"
-    else:
-        reply_text = "明日預約如下：\n"
-        for r in reservations:
-            reply_text += f"{r.get('name','')} {r.get('start_time','')} {r.get('tel','')} {r.get('memo','')}\n"
+    # 使用共用函數格式化回傳訊息
+    reply_text = format_query_text(reservations, f"「{tomorrow}」")
 
     reply_with_error(event, reply_text)
 
@@ -178,40 +171,52 @@ def handle_query_by_date(event, query_text):
             except Exception as e:
                 print(f"資料解析錯誤: {e}")
 
-    if not reservations:
-        reply_text = f"{query_date} 尚無預約紀錄。"
-    else:
-        reply_text = f"{query_date} 預約如下：\n"
-        for r in reservations:
-            reply_text += f"{r.get('name','')} {r.get('start_time','')} {r.get('tel','')} {r.get('memo','')}\n"
+    # 使用共用函數格式化回傳訊息
+    reply_text = format_query_text(reservations, f"「{query_date}」")
 
     reply_with_error(event, reply_text)
 
 # 老闆娘查詢客人名字的邏輯
 def handle_query_by_name(event, query_text):
-    # 從輸入文字中擷取名字（假設格式為：查詢客人 [名字]）
-    match = re.search(r"查詢客人\s*(\S+)", query_text)
-    if not match:
-        reply_with_error(event, "請輸入正確格式，例如：查詢客人 小明")
-        return
-    name = match.group(1)
+
+    name = query_text.strip()
 
     reservations = []
     with open("data/reservation.json", "r", encoding="utf-8") as f:
         for line in f:
             try:
                 data = json.loads(line)
+                # 比對名字（忽略大小寫）
                 if name.lower() in str(data.get("name", "")).lower():
                     reservations.append(data)
             except Exception as e:
                 print(f"資料解析錯誤: {e}")
 
-    if not reservations:
-        reply_text = f"查無「{name}」的預約紀錄。"
-    else:
-        reply_text = f"「{name}」的預約如下：\n"
-        for r in reservations:
-            reply_text += f"{r.get('date','')} {r.get('start_time','')} {r.get('tel','')} {r.get('memo','')}\n"
+    # 使用共用函數格式化回傳訊息
+    reply_text = format_query_text(reservations, f"「{name}」")
+
+    reply_with_error(event, reply_text)
+
+# 在傳送確認預約後，使用按鈕選取分店
+def handle_select_branch(event, text):
+    """
+    處理選擇分店的指令
+    :param event: LINE 事件物件
+    :param text: 使用者輸入的文字
+    """
+    try:
+        # 假設 text 是分店名稱
+        branch_name = text.strip()
+        if not branch_name:
+            raise ValueError("請提供有效的分店名稱。")
+
+        # 儲存分店資訊到暫存資料中
+        user_id = event.source.user_id
+        save_text_draft(user_id, f"選擇分店: {branch_name}")
+
+        reply_text = f"✅ 已選擇分店：{branch_name}"
+    except Exception as e:
+        reply_text = f"⚠️ 選擇分店失敗：{e}"
 
     reply_with_error(event, reply_text)
 
@@ -226,3 +231,24 @@ def reply_with_error(event, message):
         print(f"❌ 錯誤訊息：{e.message}")
     except Exception as e:
         print(f"⚠️ 未知錯誤：{type(e).__name__} - {e}")
+
+def format_query_text(reservations, title):
+    """
+    格式化預約資料為文字格式，統一包含姓名
+    :param reservations: 預約資料列表
+    :param title: 回傳訊息的標題
+    :return: 格式化的文字訊息
+    """
+    if not reservations:
+        return f"{title} 尚無預約紀錄。"
+
+    reply_text = f"{title} 的預約如下：\n"
+    for idx, r in enumerate(reservations, start=1):
+        reply_text += (
+            f"{idx}. 姓名：{r.get('name', '')}\n"
+            f"   日期：{r.get('date', '')}\n"
+            f"   時間：{r.get('start_time', '')}\n"
+            f"   電話：{r.get('tel', '')}\n"
+            f"   備註：{r.get('memo', '')}\n"
+        )
+    return reply_text
