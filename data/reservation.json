@@ -52,3 +52,5 @@
 {"name": "黃子寰", "tel": "0905939568", "date": "2025/6/2", "start_time": "18:00", "branch": "A分店", "memo": "不期待", "user_id": "U133ab9869fa48041ceaa300dc011b913", "confirmed": true}
 {"name": "黃子寰", "tel": "0905939568", "date": "2025/6/2", "start_time": "18:00", "branch": "B分店", "memo": "不期待", "user_id": "U133ab9869fa48041ceaa300dc011b913", "confirmed": true}
 {"name": "黃子寰", "tel": "0905939568", "date": "2025/6/3", "start_time": "18:00", "branch": "", "memo": "不期待", "user_id": "U133ab9869fa48041ceaa300dc011b913", "confirmed": false}
+{"name": "黃子寰", "tel": "0905939568", "date": "2025/6/3", "start_time": "1900", "branch": "", "memo": "不期待", "user_id": "U133ab9869fa48041ceaa300dc011b913", "confirmed": false}
+{"name": "黃子寰", "tel": "0905939568", "date": "2025/6/4", "start_time": "00:00:00", "branch": "", "memo": "不期待", "user_id": "U133ab9869fa48041ceaa300dc011b913", "confirmed": false}

@@ -1,5 +1,5 @@
 import json
-from services.notify_customer import notify_user_reservation_confirmed
+from services.notify_customer import notify_user_reservation_confirmed, notify_user_reservation_confirmed_modify
 
 DEFAULT_KEYS = ["name", "tel", "date", "start_time", "branch", "memo"]
 
@@ -18,3 +18,7 @@ def save_reservation_to_json(data: dict, path="data/reservation.json"):
 def finalize_and_save(user_id,reservation_data):
     save_reservation_to_json(reservation_data)
     notify_user_reservation_confirmed(user_id, reservation_data)
+    
+def finalize_and_save_modify(user_id,reservation_data):
+    save_reservation_to_json(reservation_data)
+    notify_user_reservation_confirmed_modify(user_id, reservation_data)

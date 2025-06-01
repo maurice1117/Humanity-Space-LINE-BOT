@@ -3,7 +3,7 @@
 from services.reservation_draft import (
     update_draft, delete_draft, get_text_draft, save_text_draft,get_draft
 )
-from services.reservation_flow import finalize_and_save
+from services.reservation_flow import finalize_and_save, finalize_and_save_modify
 from services.response_builder import text_reply
 from services.date_extraction import extract_date_from_text
 from services.llm_service import extract_reservation_info
@@ -92,9 +92,9 @@ def handle_modify(event, draft_id):
         tel = draft.get("tel", "")
         memo = draft.get("memo", "")
         
-        tip = "請依照以下格式修改並傳送回來：\n姓名\n日期\n時間\n電話\n備註\nId"
+        tip = "請直接複製以下範例並再傳回更改後內容：\n姓名\n日期\n時間\n電話\n備註\nId"
         example = f"{name}\n{date}\n{time}\n{tel}\n{memo}\n{draft_id}"
-        reply_text = f"{tip}\n\n目前內容：\n{example}"
+        reply_text = f"{tip}\n\n修改預約\n{example}"
         
     except Exception as e:
         reply_text = f"⚠️ 修改預約失敗：{e}"
@@ -131,7 +131,7 @@ def handle_modify_input(event, text):
     user_id = draft["user_id"]
     draft.pop("draft_id", None)  # ✅ 加上這行避免重複
     update_draft(draft_id=draft_id, **draft)
-    finalize_and_save(user_id, draft)    # user id 拿來通知
+    finalize_and_save_modify(user_id, draft)    # user id 拿來通知
     line_bot_api.reply_message(event.reply_token, text_reply("✅ 預約內容已更新，請確認後再進行新增或其他操作。"))
 
 def handle_delete(event, draft_id):
