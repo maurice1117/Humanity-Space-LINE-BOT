@@ -21,7 +21,9 @@ reservation_bot/
 
 ├── data/
 │   ├── reservation.json             # 所有預約紀錄會寫入這個 JSONL 檔
-│   └── RAG_enhancer.py              # 加入 RAG 處理
+│   ├── RAG_enhancer.py              # 加入 RAG 處理
+│   ├── notifing.log                    # 預約發送的log的json會存在這
+│   └── notification_log.json         # 預約發送的log的json會存在這
 ├── static/audio/                    # 暫存下載語音檔用於 Whisper 轉換
 ├── .env                             # 儲存 LINE Channel Token、管理者 ID
 ├── requirements.txt                 # 所有套件需求

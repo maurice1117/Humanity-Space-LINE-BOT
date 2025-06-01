@@ -3,7 +3,7 @@ from services.notify_customer import notify_user_reservation_confirmed
 
 DEFAULT_KEYS = ["name", "tel", "date", "start_time", "branch", "memo"]
 
-def pad_reservation(data):
+def pad_reservation(data):       
     for key in DEFAULT_KEYS:
         if key not in data:
             data[key] = ""
