@@ -1,7 +1,7 @@
 from linebot.models import FlexSendMessage
 from services.reservation_draft import get_draft
-from .host_command_handlers import handle_confirm_add, handle_modify, handle_delete, reply_with_error
-from services.response_builder import build_branch_selection_flex
+from .host_command_handlers import handle_confirm_add, handle_modify, handle_delete, reply_with_error, handle_request_delete, handle_delete_reservation
+from services.response_builder import build_branch_selection_flex, build_delete_confirm_flex, build_delete_reservation_flex
 from linebot import LineBotApi
 import os
 from urllib.parse import parse_qs
@@ -16,7 +16,8 @@ def handle_postback(event):
     params = parse_qs(data)  # 解析 action=confirm&draft_id=xxx 成 dict
     action = params.get("action", [None])[0]
     draft_id = params.get("draft_id", [None])[0]
-
+    uid = params.get("id", [None])[0]
+    
     if action == "select_branch":
         # 這裡不回覆訊息，可能只記錄log或更新狀態
         print(f"老闆 開始選擇分店，draft_id: {draft_id}")
@@ -48,7 +49,12 @@ def handle_postback(event):
         handle_modify(event, draft_id)
 
     elif action == "delete":
-        handle_delete(event, draft_id)
+        handle_request_delete(event, draft_id)
+        if action == "confirm_delete":
+            # 用戶點確定，執行真正刪除
+            handle_delete(event, draft_id)
+    elif action == "confirm_delete" and uid:
+        handle_delete_reservation(event, uid)
 
     else:
         print("無法辨識的操作指令")

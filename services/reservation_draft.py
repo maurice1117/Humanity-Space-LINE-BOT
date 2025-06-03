@@ -65,7 +65,20 @@ def delete_draft(draft_id):
     drafts = [d for d in drafts if d["draft_id"] != draft_id]
     save_json(DRAFT_FILE, drafts)
 
-
+def delete_reservation (uid):
+    reservations = load_json(FINAL_FILE)
+    reservations = [r for r in reservations if r["draft_id"] != uid]
+    save_json(FINAL_FILE, reservations)
+    
+    
+def get_reservation(uid):
+    reservations = load_json(FINAL_FILE)
+    for reservation in reservations:
+        print(reservation["uid"])
+        print(reservation)
+        if reservation["uid"] == uid:
+            return reservation
+    return {}
 # -------- 額外：簡易文字備份 --------
 text_drafts = {}
 

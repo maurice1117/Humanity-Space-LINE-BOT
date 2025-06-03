@@ -216,3 +216,577 @@ def build_branch_selection_flex(draft_id: str) -> FlexSendMessage:
             }
         }
     )
+
+def notify_reservation_being_check(reservation, checked):
+
+    reservation_type = "預約" if checked else "修改"
+    name = reservation.get("name", "顧客")
+    tel = reservation.get("tel", "未提供")
+    date = reservation.get("date", "未提供")
+    memo = reservation.get("memo", "無")
+    start_time = reservation.get("start_time", "無")
+    branch = reservation.get("branch", "無")
+
+    notify_text_json = {
+    "type": "bubble",
+    "body": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+        {
+            "type": "text",
+            "text": f'✅ {reservation_type}已確認',
+            "weight": "bold",
+            "size": "xl"
+        },
+        {
+            "type": "box",
+            "layout": "vertical",
+            "margin": "lg",
+            "spacing": "sm",
+            "contents": [
+            {
+                "type": "box",
+                "layout": "baseline",
+                "spacing": "sm",
+                "contents": [
+                {
+                    "type": "text",
+                    "text": "姓名",
+                    "color": "#aaaaaa",
+                    "size": "md",
+                    "flex": 1,
+                    "margin": "none"
+                },
+                {
+                    "type": "text",
+                    "text": name,
+                    "wrap": True,
+                    "color": "#666666",
+                    "size": "md",
+                    "flex": 5
+                }
+                ]
+            },
+            {
+                "type": "box",
+                "layout": "baseline",
+                "spacing": "sm",
+                "contents": [
+                {
+                    "type": "text",
+                    "text": "電話",
+                    "color": "#aaaaaa",
+                    "size": "md",
+                    "flex": 1
+                },
+                {
+                    "type": "text",
+                    "text": tel,
+                    "wrap": True,
+                    "color": "#666666",
+                    "size": "md",
+                    "flex": 5
+                }
+                ]
+            },
+            {
+                "type": "box",
+                "layout": "baseline",
+                "spacing": "sm",
+                "contents": [
+                {
+                    "type": "text",
+                    "text": "日期",
+                    "color": "#aaaaaa",
+                    "size": "md",
+                    "flex": 1,
+                    "margin": "none"
+                },
+                {
+                    "type": "text",
+                    "text": date,
+                    "wrap": True,
+                    "color": "#666666",
+                    "size": "md",
+                    "flex": 5
+                }
+                ]
+            },
+            {
+                "type": "box",
+                "layout": "baseline",
+                "spacing": "sm",
+                "contents": [
+                {
+                    "type": "text",
+                    "text": "時間",
+                    "color": "#aaaaaa",
+                    "size": "md",
+                    "flex": 1
+                },
+                {
+                    "type": "text",
+                    "text": start_time,
+                    "wrap": True,
+                    "color": "#666666",
+                    "size": "md",
+                    "flex": 5
+                }
+                ]
+            },
+            {
+                "type": "box",
+                "layout": "baseline",
+                "spacing": "sm",
+                "contents": [
+                {
+                    "type": "text",
+                    "text": "分店",
+                    "color": "#aaaaaa",
+                    "size": "md",
+                    "flex": 1,
+                    "margin": "none"
+                },
+                {
+                    "type": "text",
+                    "text": branch,
+                    "wrap": True,
+                    "color": "#666666",
+                    "size": "md",
+                    "flex": 5
+                }
+                ]
+            },
+            {
+                "type": "box",
+                "layout": "baseline",
+                "spacing": "sm",
+                "contents": [
+                {
+                    "type": "text",
+                    "text": "備註",
+                    "color": "#aaaaaa",
+                    "size": "md",
+                    "flex": 1,
+                    "margin": "none"
+                },
+                {
+                    "type": "text",
+                    "text": memo,
+                    "wrap": True,
+                    "color": "#666666",
+                    "size": "md",
+                    "flex": 5
+                }
+                ]
+            }
+            ]
+        }
+        ]
+    }
+    }
+    return FlexSendMessage(alt_text="預約已確認", contents=notify_text_json)
+
+def notify_reservation_being_delete(reservation, refuse):
+
+    refuse = "拒絕" if refuse else "刪除"
+    name = reservation.get("name", "顧客")
+    tel = reservation.get("tel", "未提供")
+    date = reservation.get("date", "未提供")
+    memo = reservation.get("memo", "無")
+    start_time = reservation.get("start_time", "無")
+    branch = reservation.get("branch", "無")
+    
+    notify_text_json = {
+    "type": "bubble",
+    "body": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+        {
+            "type": "text",
+            "text": f'您的預約已被{refuse}',
+            "weight": "bold",
+            "size": "xl"
+        },
+        {
+            "type": "box",
+            "layout": "vertical",
+            "margin": "lg",
+            "spacing": "sm",
+            "contents": [
+            {
+                "type": "box",
+                "layout": "baseline",
+                "spacing": "sm",
+                "contents": [
+                {
+                    "type": "text",
+                    "text": "姓名",
+                    "color": "#aaaaaa",
+                    "size": "md",
+                    "flex": 1,
+                    "margin": "none"
+                },
+                {
+                    "type": "text",
+                    "text": name,
+                    "wrap": True,
+                    "color": "#666666",
+                    "size": "md",
+                    "flex": 5
+                }
+                ]
+            },
+            {
+                "type": "box",
+                "layout": "baseline",
+                "spacing": "sm",
+                "contents": [
+                {
+                    "type": "text",
+                    "text": "電話",
+                    "color": "#aaaaaa",
+                    "size": "md",
+                    "flex": 1
+                },
+                {
+                    "type": "text",
+                    "text": tel,
+                    "wrap": True,
+                    "color": "#666666",
+                    "size": "md",
+                    "flex": 5
+                }
+                ]
+            },
+            {
+                "type": "box",
+                "layout": "baseline",
+                "spacing": "sm",
+                "contents": [
+                {
+                    "type": "text",
+                    "text": "日期",
+                    "color": "#aaaaaa",
+                    "size": "md",
+                    "flex": 1,
+                    "margin": "none"
+                },
+                {
+                    "type": "text",
+                    "text": date,
+                    "wrap": True,
+                    "color": "#666666",
+                    "size": "md",
+                    "flex": 5
+                }
+                ]
+            },
+            {
+                "type": "box",
+                "layout": "baseline",
+                "spacing": "sm",
+                "contents": [
+                {
+                    "type": "text",
+                    "text": "時間",
+                    "color": "#aaaaaa",
+                    "size": "md",
+                    "flex": 1
+                },
+                {
+                    "type": "text",
+                    "text": start_time,
+                    "wrap": True,
+                    "color": "#666666",
+                    "size": "md",
+                    "flex": 5
+                }
+                ]
+            },
+            {
+                "type": "box",
+                "layout": "baseline",
+                "spacing": "sm",
+                "contents": [
+                {
+                    "type": "text",
+                    "text": "分店",
+                    "color": "#aaaaaa",
+                    "size": "md",
+                    "flex": 1,
+                    "margin": "none"
+                },
+                {
+                    "type": "text",
+                    "text": branch,
+                    "wrap": True,
+                    "color": "#666666",
+                    "size": "md",
+                    "flex": 5
+                }
+                ]
+            },
+            {
+                "type": "box",
+                "layout": "baseline",
+                "spacing": "sm",
+                "contents": [
+                {
+                    "type": "text",
+                    "text": "備註",
+                    "color": "#aaaaaa",
+                    "size": "md",
+                    "flex": 1,
+                    "margin": "none"
+                },
+                {
+                    "type": "text",
+                    "text": memo,
+                    "wrap": True,
+                    "color": "#666666",
+                    "size": "md",
+                    "flex": 5
+                }
+                ]
+            }
+            ]
+        }
+        ]
+    }
+    }
+    return FlexSendMessage(alt_text="預約已確認", contents=notify_text_json)
+
+def build_delete_confirm_flex(reservation):
+    
+
+    name = reservation.get("name", "顧客")
+    tel = reservation.get("tel", "未提供")
+    date = reservation.get("date", "未提供")
+    memo = reservation.get("memo", "無")
+    start_time = reservation.get("start_time", "無")
+    branch = reservation.get("branch", "無")
+    draft_id = reservation.get("draft_id", "0")
+        
+    flex_json = {
+        "type": "bubble",
+        "body": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+                {
+                    "type": "text",
+                    "text": f"確定是否刪除該預約",
+                    "weight": "bold",
+                    "size": "xl"
+                },
+                {
+                    "type": "box",
+                    "layout": "vertical",
+                    "margin": "lg",
+                    "spacing": "sm",
+                    "contents": [
+                        {
+                            "type": "box",
+                            "layout": "baseline",
+                            "spacing": "sm",
+                            "contents": [
+                                {"type": "text", "text": "姓名", "color": "#aaaaaa", "size": "md", "flex": 1},
+                                {"type": "text", "text": name, "wrap": True, "color": "#666666", "size": "md", "flex": 5}
+                            ]
+                        },
+                        {
+                            "type": "box",
+                            "layout": "baseline",
+                            "spacing": "sm",
+                            "contents": [
+                                {"type": "text", "text": "電話", "color": "#aaaaaa", "size": "md", "flex": 1},
+                                {"type": "text", "text": tel, "wrap": True, "color": "#666666", "size": "md", "flex": 5}
+                            ]
+                        },
+                        {
+                            "type": "box",
+                            "layout": "baseline",
+                            "spacing": "sm",
+                            "contents": [
+                                {"type": "text", "text": "日期", "color": "#aaaaaa", "size": "md", "flex": 1},
+                                {"type": "text", "text": date, "wrap": True, "color": "#666666", "size": "md", "flex": 5}
+                            ]
+                        },
+                        {
+                            "type": "box",
+                            "layout": "baseline",
+                            "spacing": "sm",
+                            "contents": [
+                                {"type": "text", "text": "時間", "color": "#aaaaaa", "size": "md", "flex": 1},
+                                {"type": "text", "text": start_time, "wrap": True, "color": "#666666", "size": "md", "flex": 5}
+                            ]
+                        },
+                        {
+                            "type": "box",
+                            "layout": "baseline",
+                            "spacing": "sm",
+                            "contents": [
+                                {"type": "text", "text": "分店", "color": "#aaaaaa", "size": "md", "flex": 1},
+                                {"type": "text", "text": branch, "wrap": True, "color": "#666666", "size": "md", "flex": 5}
+                            ]
+                        },
+                        {
+                            "type": "box",
+                            "layout": "baseline",
+                            "spacing": "sm",
+                            "contents": [
+                                {"type": "text", "text": "備註", "color": "#aaaaaa", "size": "md", "flex": 1},
+                                {"type": "text", "text": memo, "wrap": True, "color": "#666666", "size": "md", "flex": 5}
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "footer": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+                {
+                    "type": "button",
+                    "style": "primary",
+                    "color": "#DD0000",
+                    "action": {
+                        "type": "postback",
+                        "label": "✅ 確定刪除",
+                        "data": f"action=confirm_delete&id={draft_id}"
+                    }
+                },
+                {
+                    "type": "button",
+                    "action": {
+                        "type": "message",
+                        "label": "取消",
+                        "text": "已取消刪除"
+                    }
+                }
+            ]
+        }
+    }
+
+    return flex_json
+
+def build_delete_reservation_flex(reservation):
+    
+
+    name = reservation.get("name", "顧客")
+    tel = reservation.get("tel", "未提供")
+    date = reservation.get("date", "未提供")
+    memo = reservation.get("memo", "無")
+    start_time = reservation.get("start_time", "無")
+    branch = reservation.get("branch", "無")
+    uid = reservation.get("draft_id", "0")
+    if uid == "0":
+        uid = reservation.get("uid", "0")
+        
+    flex_json = {
+        "type": "bubble",
+        "body": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+                {
+                    "type": "text",
+                    "text": f"確定是否刪除該預約",
+                    "weight": "bold",
+                    "size": "xl"
+                },
+                {
+                    "type": "box",
+                    "layout": "vertical",
+                    "margin": "lg",
+                    "spacing": "sm",
+                    "contents": [
+                        {
+                            "type": "box",
+                            "layout": "baseline",
+                            "spacing": "sm",
+                            "contents": [
+                                {"type": "text", "text": "姓名", "color": "#aaaaaa", "size": "md", "flex": 1},
+                                {"type": "text", "text": name, "wrap": True, "color": "#666666", "size": "md", "flex": 5}
+                            ]
+                        },
+                        {
+                            "type": "box",
+                            "layout": "baseline",
+                            "spacing": "sm",
+                            "contents": [
+                                {"type": "text", "text": "電話", "color": "#aaaaaa", "size": "md", "flex": 1},
+                                {"type": "text", "text": tel, "wrap": True, "color": "#666666", "size": "md", "flex": 5}
+                            ]
+                        },
+                        {
+                            "type": "box",
+                            "layout": "baseline",
+                            "spacing": "sm",
+                            "contents": [
+                                {"type": "text", "text": "日期", "color": "#aaaaaa", "size": "md", "flex": 1},
+                                {"type": "text", "text": date, "wrap": True, "color": "#666666", "size": "md", "flex": 5}
+                            ]
+                        },
+                        {
+                            "type": "box",
+                            "layout": "baseline",
+                            "spacing": "sm",
+                            "contents": [
+                                {"type": "text", "text": "時間", "color": "#aaaaaa", "size": "md", "flex": 1},
+                                {"type": "text", "text": start_time, "wrap": True, "color": "#666666", "size": "md", "flex": 5}
+                            ]
+                        },
+                        {
+                            "type": "box",
+                            "layout": "baseline",
+                            "spacing": "sm",
+                            "contents": [
+                                {"type": "text", "text": "分店", "color": "#aaaaaa", "size": "md", "flex": 1},
+                                {"type": "text", "text": branch, "wrap": True, "color": "#666666", "size": "md", "flex": 5}
+                            ]
+                        },
+                        {
+                            "type": "box",
+                            "layout": "baseline",
+                            "spacing": "sm",
+                            "contents": [
+                                {"type": "text", "text": "備註", "color": "#aaaaaa", "size": "md", "flex": 1},
+                                {"type": "text", "text": memo, "wrap": True, "color": "#666666", "size": "md", "flex": 5}
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "footer": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+                {
+                    "type": "button",
+                    "style": "primary",
+                    "color": "#DD0000",
+                    "action": {
+                        "type": "postback",
+                        "label": "✅ 確定刪除",
+                        "data": f"action=confirm_delete&id={uid}"
+                    }
+                },
+                {
+                    "type": "button",
+                    "action": {
+                        "type": "message",
+                        "label": "取消",
+                        "text": "已取消刪除"
+                    }
+                }
+            ]
+        }
+    }
+
+    return flex_json
