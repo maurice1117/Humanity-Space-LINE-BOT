@@ -5,6 +5,7 @@ from .reservation_flow import pad_reservation  # 讓欄位統一格式
 DRAFT_FILE = "data/drafts.json"
 FINAL_FILE = "data/reservation.json"
 
+
 # -------- 工具方法 --------
 def load_json(filename):
     if os.path.exists(filename):
@@ -25,9 +26,22 @@ def generate_draft_id(user_id, date, start_time):
     return f"{user_id}_{safe_date}_{safe_start_time}"
 
 
+# -------- 讀取草稿檔案 --------
+def load_drafts(DRAFT_FILE):
+    if os.path.exists(DRAFT_FILE):
+        with open(DRAFT_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
+# -------- 讀取正式預約檔案 --------
+def load_reservations():
+    if os.path.exists(FINAL_FILE):
+        with open(FINAL_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
 # -------- 草稿操作 --------
 def save_draft(user_id, draft_data):
-    drafts = load_json(DRAFT_FILE)
+    drafts = load_drafts(DRAFT_FILE)
     draft_data = pad_reservation(draft_data)
     date = draft_data.get("date", "未提供")
     start_time = draft_data.get("start_time", "未提供")
@@ -42,7 +56,7 @@ def save_draft(user_id, draft_data):
     save_json(DRAFT_FILE, drafts)
 
 def update_draft(draft_id, **kwargs):
-    drafts = load_json(DRAFT_FILE)
+    drafts = load_drafts(DRAFT_FILE)
     for i, draft in enumerate(drafts):
         if draft.get("draft_id") == draft_id:
             kwargs.pop("draft_id", None)  # 移除避免重複
@@ -52,7 +66,7 @@ def update_draft(draft_id, **kwargs):
     save_json(DRAFT_FILE, drafts)
 
 def get_draft(draft_id):
-    drafts = load_json(DRAFT_FILE)
+    drafts = load_drafts(DRAFT_FILE)
     for draft in drafts:
         print(draft["draft_id"])
         print(draft_id)
@@ -61,11 +75,23 @@ def get_draft(draft_id):
     return {}
 
 def delete_draft(draft_id):
-    drafts = load_json(DRAFT_FILE)
+    drafts = load_drafts(DRAFT_FILE)
     drafts = [d for d in drafts if d["draft_id"] != draft_id]
     save_json(DRAFT_FILE, drafts)
 
-
+def delete_reservation (uid):
+    reservations = load_drafts(FINAL_FILE)
+    reservations = [r for r in reservations if r.get("uid") != uid]
+    save_json(FINAL_FILE, reservations)
+    
+    
+def get_reservation(uid):
+    reservations = load_json(FINAL_FILE)
+    for reservation in reservations:
+        uid_value = reservation.get("uid")  # 避免 KeyError
+        if uid_value == uid:
+            return reservation
+    return {}
 # -------- 額外：簡易文字備份 --------
 text_drafts = {}
 
