@@ -1,4 +1,5 @@
 import json
+import os
 from services.notify_customer import notify_user_reservation_confirmed, notify_user_reservation_confirmed_modify
 
 DEFAULT_KEYS = ["name", "tel", "date", "start_time", "branch", "memo"]
@@ -10,11 +11,25 @@ def pad_reservation(data):
     return data
     
 def save_reservation_to_json(data: dict, path="data/reservation.json"):
-    data = pad_reservation(data)  # 寫入前補齊欄位
-    with open(path, "a", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False)
-        f.write("\n")
+    data = pad_reservation(data)  # 補齊欄位
 
+    # 讀取原有資料
+    if os.path.exists(path):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                all_data = json.load(f)
+        except json.JSONDecodeError:
+            all_data = []
+    else:
+        all_data = []
+
+    # 加入新的資料
+    all_data.append(data)
+
+    # 覆蓋寫回
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(all_data, f, ensure_ascii=False, indent=2)
+        
 def get_user_short_id(user_id: str) -> str:
     return user_id[:4].upper()  # 取前四碼並大寫
 
@@ -40,7 +55,7 @@ def finalize_and_save_modify(user_id,reservation_data):
     date = reservation_data.get("date", "unknown")  # 例如 "2025/06/08"
     time = reservation_data.get("start_time", "unknown")  # 例如 "14:00"
     branch = reservation_data.get("branch", "X")
-    
+    branch = branch if branch else "X"
     # 取 MMDD
     mmdd = date.replace("/", "")[-4:] if len(date) >= 5 else "0000"
     # 取 HHMM

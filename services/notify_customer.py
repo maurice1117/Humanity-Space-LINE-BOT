@@ -20,6 +20,7 @@ def notify_user_reservation_confirmed(user_id, reservation):
     
 def notify_user_reservation_confirmed_modify(user_id, reservation):
     message = notify_reservation_being_check(reservation, False)
+    print(user_id)
     # name = reservation.get("name", "顧客")
     # date = reservation.get("date", "未提供")
     # memo = reservation.get("memo", "無")

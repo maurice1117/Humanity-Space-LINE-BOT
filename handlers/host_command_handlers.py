@@ -1,10 +1,10 @@
 # 用來存放老闆娘的指令處理邏輯的functions
 # 服務層
 from services.reservation_draft import (
-    update_draft, delete_draft, get_text_draft, save_text_draft,get_draft, get_reservation
+    update_draft, delete_draft, get_text_draft, save_text_draft,get_draft, get_reservation, load_json
 )
 from services.reservation_flow import finalize_and_save, finalize_and_save_modify
-from services.response_builder import text_reply, notify_reservation_being_delete, build_delete_confirm_flex
+from services.response_builder import text_reply, notify_reservation_being_delete, build_delete_confirm_flex, build_delete_reservation_flex, FlexSendMessage
 from services.date_extraction import extract_date_from_text
 from services.llm_service import extract_reservation_info
 from services.notify_customer import notify_user_reservation_confirmed
@@ -20,7 +20,10 @@ import re
 
 line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
 
-
+def load_all_reservations():
+    with open("data/reservation.json", "r", encoding="utf-8") as f:
+        return json.load(f)  # 整個檔案是 JSON 陣列
+    
 def handle_confirm_add(event, draft_id):
     try:
         print(draft_id)
@@ -93,7 +96,7 @@ def handle_modify(event, draft_id):
         memo = draft.get("memo", "")
         
         tip = "請直接複製以下範例並再傳回更改後內容："
-        example = f"姓名 {name}\n日期 {date}\n時間 {time}\n電話 {tel}\n備註 {memo}\nId:{draft_id}"
+        example = f"姓名 {name}\n日期 {date}\n時間 {time}\n電話 {tel}\n備註 {memo}\nId {draft_id}"
         reply_text = f"{tip}\n{example}"
         
     except Exception as e:
@@ -115,7 +118,8 @@ def handle_modify_input(event, text):
             key = match.group(1).strip()
             value = match.group(2).strip()
             content[key] = value
-
+            print(match)
+        print(line)
     draft_id = content.get("Id")
     if not draft_id:
         line_bot_api.reply_message(
@@ -175,9 +179,11 @@ def handle_delete(event, draft_id):
         reply_text = f"⚠️ 取消訂單失敗：{e}"
 
     # 推播取消通知給用戶
-    text = notify_reservation_being_delete(draft, 1)        
-    message = TextSendMessage(text=text)
-    line_bot_api.push_message(user_id, message)    # push_message 給user
+    flex_content   = notify_reservation_being_delete(draft, 0)
+    if isinstance(flex_content, str):
+        flex_content = json.loads(flex_content)
+    message = FlexSendMessage(alt_text="預約已修改", contents=flex_content)
+    line_bot_api.push_message(user_id, message)
 
     # 回覆用戶刪除結果
     line_bot_api.reply_message(
@@ -204,36 +210,62 @@ def handle_delete(event, draft_id):
 #     line_bot_api.push_message(user_id, message)
 #     reply_with_error(event, reply_text)    # 回傳給user
 
-def handle_reservation_delete(event, uid):
-    # 根據 draft_id 取得 draft 資料
-    reservation = get_reservation(uid)
-    print(f'reservation是 {reservation}')
-    # 產生確認刪除用的 Flex message
-    flex_json = build_delete_confirm_flex(reservation)
+def handle_reservation_delete_confirm(event, uid):
+    
+    try:
+        # 取得預約資料
+        reservation = get_reservation(uid)
+        
+        if not reservation:
+            reply_text = "⚠️ 找不到該預約，可能已被刪除或不存在"
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
+            return
+        
+        # 產生確認刪除用的 Flex message
+        flex_json = build_delete_reservation_flex(reservation)
 
-    # 用 reply 傳送 Flex Message，請用戶確認
-    line_bot_api.reply_message(
-        event.reply_token,
-        FlexSendMessage(alt_text="請確認是否刪除預約", contents=flex_json)
-    )
+        # 用 reply 傳送 Flex Message，請用戶確認
+        line_bot_api.reply_message(
+            event.reply_token,
+            FlexSendMessage(alt_text="請確認是否刪除預約", contents=flex_json)
+        )
+    
+    except Exception as e:
+        print(f"handle_reservation_delete 發生錯誤: {e}")
+        reply_text = f"⚠️ 發生錯誤，請稍後再試。錯誤訊息：{e}"
+        reply_with_error(event, reply_text)
 
 def handle_delete_reservation(event, uid):
     from services.reservation_draft import delete_reservation
     
-    reservation = get_reservation(uid)
-    user_id = reservation["user_id"]
-    # 產生確認刪除用的 Flex message
-    
     try:
+        reservation = get_reservation(uid)
+        print("Reservation:", reservation)
+        
+        user_id = reservation.get("user_id")
+        if not user_id:
+            raise ValueError("找不到 user_id")
+        
+        # 刪除預約
         delete_reservation(uid)
-        reply_text = "🗑 已取消該預約"
+        
     except Exception as e:
         reply_text = f"⚠️ 取消預約失敗：{e}"
-    text = notify_reservation_being_delete(reservation, 0)
+        print(f"刪除預約錯誤: {e}")
+        reply_with_error(event, reply_text)
+        return
     
-    message = TextSendMessage(text=text)
-    line_bot_api.push_message(user_id, message) # 回傳給user
-    reply_with_error(event, reply_text)    
+    # 成功刪除，嘗試發送通知
+    try:
+        line_bot_api.push_message(user_id, TextSendMessage(text="您的預約已取消"))
+        message = notify_reservation_being_delete(reservation, refuse=0)
+        line_bot_api.push_message(user_id, message)
+    except Exception as e:
+        print(f"發送通知失敗: {e}")
+
+    # 回覆用戶
+    reply_text = "預約已取消"
+    reply_with_error(event, reply_text)
     
     
 def handle_unknown_command(event):
@@ -248,66 +280,84 @@ def handle_unknown_command(event):
     reply_with_error(event, reply_text)
 
 
+# # 老闆娘查詢本日預約的邏輯
+# def handle_query_for_today(event):
+#     today = datetime.now().date()  # 只取日期部分
+
+#     reservations = []
+#     with open("data/reservation.json", "r", encoding="utf-8") as f:
+#         for line in f:
+#             try:
+#                 data = json.loads(line)
+#                 date_str = str(data.get("date", ""))
+#                 # 嘗試將 date_str 轉成 datetime 物件
+#                 try:
+#                     date_obj = datetime.strptime(date_str, "%Y/%m/%d").date()  # 只取日期部分
+#                 except ValueError:
+#                     # 若格式不同（如 "2025/5/27"），再試一次
+#                     try:
+#                         date_obj = datetime.strptime(date_str, "%Y/%m/%d").replace(
+#                             month=int(date_str.split("/")[1]), day=int(date_str.split("/")[2])
+#                         ).date()  # 只取日期部分
+#                     except Exception:
+#                         date_obj = None
+#                 # 比對日期或關鍵字
+#                 if (date_obj and date_obj == today):
+#                     reservations.append(data)
+#             except Exception as e:
+#                 print(f"資料解析錯誤: {e}")
+
+#     # 使用共用函數格式化回傳訊息
+#     reply_text = format_query_text(reservations, f"「{today}」")
+
+#     reply_with_error(event, reply_text)
+
+def parse_date(date_str):
+    """嘗試解析日期字串成 date 物件"""
+    try:
+        return datetime.strptime(date_str, "%Y/%m/%d").date()
+    except ValueError:
+        # 針對可能的格式變化（如 2025/5/27）做補救
+        try:
+            parts = date_str.split("/")
+            if len(parts) == 3:
+                year = int(parts[0])
+                month = int(parts[1])
+                day = int(parts[2])
+                return datetime(year, month, day).date()
+        except Exception:
+            pass
+    return None
+
 # 老闆娘查詢本日預約的邏輯
 def handle_query_for_today(event):
-    today = datetime.now().date()  # 只取日期部分
-
+    today = datetime.now().date()
     reservations = []
-    with open("data/reservation.json", "r", encoding="utf-8") as f:
-        for line in f:
-            try:
-                data = json.loads(line)
-                date_str = str(data.get("date", ""))
-                # 嘗試將 date_str 轉成 datetime 物件
-                try:
-                    date_obj = datetime.strptime(date_str, "%Y/%m/%d").date()  # 只取日期部分
-                except ValueError:
-                    # 若格式不同（如 "2025/5/27"），再試一次
-                    try:
-                        date_obj = datetime.strptime(date_str, "%Y/%m/%d").replace(
-                            month=int(date_str.split("/")[1]), day=int(date_str.split("/")[2])
-                        ).date()  # 只取日期部分
-                    except Exception:
-                        date_obj = None
-                # 比對日期或關鍵字
-                if (date_obj and date_obj == today):
-                    reservations.append(data)
-            except Exception as e:
-                print(f"資料解析錯誤: {e}")
 
-    # 使用共用函數格式化回傳訊息
+    all_reservations = load_all_reservations()
+    for data in all_reservations:
+        date_str = str(data.get("date", ""))
+        date_obj = parse_date(date_str)
+        if date_obj == today:
+            reservations.append(data)
+
     reply_text = format_query_text(reservations, f"「{today}」")
-
     reply_with_error(event, reply_text)
-
+    
 # 老闆娘查詢明日預約的邏輯
 def handle_query_for_tomorrow(event):
-    tomorrow = (datetime.now() + timedelta(days=1)).date()  # 只取日期部分
-    # print(f"查詢明日預約，日期為: {tomorrow}")
-
+    tomorrow = (datetime.now() + timedelta(days=1)).date()
     reservations = []
-    with open("data/reservation.json", "r", encoding="utf-8") as f:
-        for line in f:
-            try:
-                data = json.loads(line)
-                date_str = str(data.get("date", ""))
-                # 嘗試將 date_str 轉成 datetime 物件
-                try:
-                    date_obj = datetime.strptime(date_str, "%Y/%m/%d").date()  # 只取日期部分
-                    # print(f"日期解析成功: {date_obj}")
-                except ValueError:
-                    # 若格式不同（如 "2025/5/27"），再試一次
-                    try:
-                        date_obj = datetime.strptime(date_str, "%Y/%m/%d").replace(
-                            month=int(date_str.split("/")[1]), day=int(date_str.split("/")[2])
-                        ).date()  # 只取日期部分
-                    except Exception:
-                        date_obj = None
-                # 比對日期或關鍵字
-                if (date_obj and date_obj == tomorrow):
-                    reservations.append(data)
-            except Exception as e:
-                print(f"資料解析錯誤: {e}")
+
+    all_reservations = load_all_reservations()
+    for data in all_reservations:
+        date_str = str(data.get("date", ""))
+        date_obj = parse_date(date_str)
+        if date_obj == tomorrow:
+            reservations.append(data)
+
+    reply_text = format_query_text(reservations, f"「{tomorrow}」")
+    reply_with_error(event, reply_text)
 
     # 使用共用函數格式化回傳訊息
     reply_text = format_query_text(reservations, f"「{tomorrow}」")
@@ -322,19 +372,13 @@ def handle_query_by_date(event, query_text):
         return
 
     reservations = []
-    with open("data/reservation.json", "r", encoding="utf-8") as f:
-        for line in f:
-            try:
-                data = json.loads(line)
-                date_str = str(data.get("date", ""))
-                if query_date in date_str:
-                    reservations.append(data)
-            except Exception as e:
-                print(f"資料解析錯誤: {e}")
+    all_reservations = load_all_reservations()
+    for data in all_reservations:
+        date_str = str(data.get("date", ""))
+        if query_date in date_str:
+            reservations.append(data)
 
-    # 使用共用函數格式化回傳訊息
     reply_text = format_query_text(reservations, f"「{query_date}」")
-
     reply_with_error(event, reply_text)
 
 # 老闆娘查詢客人名字的邏輯
@@ -343,20 +387,27 @@ def handle_query_by_name(event, query_text):
     name = query_text.strip()
 
     reservations = []
-    with open("data/reservation.json", "r", encoding="utf-8") as f:
-        for line in f:
-            try:
-                data = json.loads(line)
-                # 比對名字（忽略大小寫）
-                if name.lower() in str(data.get("name", "")).lower():
-                    reservations.append(data)
-            except Exception as e:
-                print(f"資料解析錯誤: {e}")
+    all_reservations = load_all_reservations()
+    for data in all_reservations:
+        if name in str(data.get("name", "")).lower():
+            reservations.append(data)
 
-    # 使用共用函數格式化回傳訊息
-    reply_text = format_query_text(reservations, f"「{name}」")
-
+    reply_text = format_query_text(reservations, f"「{query_text.strip()}」")
     reply_with_error(event, reply_text)
+    # with open("data/reservation.json", "r", encoding="utf-8") as f:
+    #     for line in f:
+    #         try:
+    #             data = json.loads(line)
+    #             # 比對名字（忽略大小寫）
+    #             if name.lower() in str(data.get("name", "")).lower():
+    #                 reservations.append(data)
+    #         except Exception as e:
+    #             print(f"資料解析錯誤: {e}")
+
+    # # 使用共用函數格式化回傳訊息
+    # reply_text = format_query_text(reservations, f"「{name}」")
+
+    # reply_with_error(event, reply_text)
 
 # def
 

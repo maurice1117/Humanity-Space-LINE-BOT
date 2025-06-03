@@ -220,12 +220,12 @@ def build_branch_selection_flex(draft_id: str) -> FlexSendMessage:
 def notify_reservation_being_check(reservation, checked):
 
     reservation_type = "預約" if checked else "修改"
-    name = reservation.get("name", "顧客")
-    tel = reservation.get("tel", "未提供")
-    date = reservation.get("date", "未提供")
-    memo = reservation.get("memo", "無")
-    start_time = reservation.get("start_time", "無")
-    branch = reservation.get("branch", "無")
+    name = reservation.get("name") or "顧客"
+    tel = reservation.get("tel") or "未提供"
+    date = reservation.get("date") or "未提供"
+    memo = reservation.get("memo") or "無"
+    start_time = reservation.get("start_time") or "無"
+    branch = reservation.get("branch") or "無"
 
     notify_text_json = {
     "type": "bubble",
@@ -561,7 +561,6 @@ def notify_reservation_being_delete(reservation, refuse):
 
 def build_delete_confirm_flex(reservation):
     
-
     name = reservation.get("name", "顧客")
     tel = reservation.get("tel", "未提供")
     date = reservation.get("date", "未提供")
@@ -569,7 +568,6 @@ def build_delete_confirm_flex(reservation):
     start_time = reservation.get("start_time", "無")
     branch = reservation.get("branch", "無")
     draft_id = reservation.get("draft_id", "0")
-        
     flex_json = {
         "type": "bubble",
         "body": {
@@ -677,15 +675,13 @@ def build_delete_confirm_flex(reservation):
 def build_delete_reservation_flex(reservation):
     
 
-    name = reservation.get("name", "顧客")
-    tel = reservation.get("tel", "未提供")
-    date = reservation.get("date", "未提供")
-    memo = reservation.get("memo", "無")
-    start_time = reservation.get("start_time", "無")
-    branch = reservation.get("branch", "無")
-    uid = reservation.get("draft_id", "0")
-    if uid == "0":
-        uid = reservation.get("uid", "0")
+    name = reservation.get("name") or "顧客"
+    tel = reservation.get("tel") or "未提供"
+    date = reservation.get("date") or "未提供"
+    memo = reservation.get("memo") or "無"
+    start_time = reservation.get("start_time") or "無"
+    branch = reservation.get("branch") or "無"
+    uid = reservation.get("uid", "0")
         
     flex_json = {
         "type": "bubble",
