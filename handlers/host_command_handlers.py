@@ -94,9 +94,10 @@ def handle_modify(event, draft_id):
         time = draft.get("start_time", "")
         tel = draft.get("tel", "")
         memo = draft.get("memo", "")
+        branch = draft.get("branch", "")
         
         tip = "請直接複製以下範例並再傳回更改後內容："
-        example = f"姓名 {name}\n日期 {date}\n時間 {time}\n電話 {tel}\n備註 {memo}\nId {draft_id}"
+        example = f"姓名 {name}\n日期 {date}\n時間 {time}\n電話 {tel}\n備註 {memo}\n分店 {branch}\nId {draft_id}"
         reply_text = f"{tip}\n{example}"
         
     except Exception as e:
@@ -142,6 +143,7 @@ def handle_modify_input(event, text):
     draft["start_time"] = content.get("時間", draft.get("start_time", ""))
     draft["tel"] = content.get("電話", draft.get("tel", ""))
     draft["memo"] = content.get("備註", draft.get("memo", ""))
+    draft["branch"] = content.get("分店", draft.get("memo", ""))
 
     user_id = draft["user_id"]
     draft.pop("draft_id", None)  # 移除多餘欄位
