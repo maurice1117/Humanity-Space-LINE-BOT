@@ -1,8 +1,3 @@
-以下是針對您所提供的專案結構（`reservation_bot/`）所撰寫的詳細介紹，分為繁體中文與英文兩個部分。若專案中有尚未說明清楚或需要補充的內容，也歡迎您提出，我可以再進一步詢問或補充說明。
-
----
-
-## 繁體中文說明
 
 ### 一、專案概述
 
@@ -736,29 +731,3 @@ OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxx
 7. **Scalable Data Format**
 
    * Using JSONL (`reservation.json`) for storing records means each reservation is a standalone JSON object—simple to process with command-line tools (e.g., `jq`) or data analysis frameworks (e.g., Pandas).
-
----
-
-## 若有需要進一步釐清的地方，請隨時告訴我！以下是一些可能的確認問題（僅供參考）：
-
-1. **管理者權限**
-
-   * 請問管理者 ID 一定是 `.env` 中以逗號分隔的 LINE User ID 嗎？或者還有其他方式認證（例如 Channel Role）？
-
-2. **草稿過期機制**
-
-   * 是否需要在 `reservation_draft.py` 中設定草稿的自動過期時間？若要設定，過期時間大概是多少（例如 24 小時、48 小時）？
-
-3. **多語系需求**
-
-   * 目前的 LLM 服務是否同時需要支援中⽂與英⽂的意圖判斷和抽取？或僅限於單一語系？
-
-4. **提醒頻率與時段設定**
-
-   * 除了「明日」與「兩小時後」提醒，是否還需要在「24 小時後」或「一週前」再進行一次提醒？
-
-5. **資料庫選擇**
-
-   * 目前採用 JSONL 存檔，如有未來需要大量資料查詢，是否考慮改為關聯式資料庫或 NoSQL？
-
-若上述任何部分與您的需求不符，或有其他細節要補充，請告訴我！我可以依照您的回覆進一步調整介紹內容。
