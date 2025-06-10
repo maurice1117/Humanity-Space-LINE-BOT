@@ -65,6 +65,16 @@ def update_draft(draft_id, **kwargs):
             break
     save_json(DRAFT_FILE, drafts)
 
+def update_reservation(uid, **kwargs):
+    reservations = load_drafts(DRAFT_FILE)
+    for i, reservation in enumerate(reservations):
+        if reservation.get("uid") == uid:
+            kwargs.pop("uid", None)  # 移除避免重複
+            reservations[i].update(kwargs)
+            reservations[i] = pad_reservation(reservations[i])
+            break
+    save_json(FINAL_FILE, reservations)
+
 def get_draft(draft_id):
     drafts = load_drafts(DRAFT_FILE)
     for draft in drafts:

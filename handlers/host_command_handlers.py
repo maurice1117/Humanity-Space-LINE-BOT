@@ -26,7 +26,6 @@ def load_all_reservations():
     
 def handle_confirm_add(event, draft_id):
     try:
-        print(draft_id)
         # 讀取該使用者的暫存預約草稿
         draft = get_draft(draft_id)
         if not draft:
@@ -96,7 +95,7 @@ def handle_modify(event, draft_id):
         memo = draft.get("memo", "")
         branch = draft.get("branch", "")
         
-        tip = "請直接複製以下範例並再傳回更改後內容："
+        tip = "更改預約草稿，請直接複製以下範例並再傳回更改後內容："
         example = f"姓名 {name}\n日期 {date}\n時間 {time}\n電話 {tel}\n備註 {memo}\n分店 {branch}\nId {draft_id}"
         reply_text = f"{tip}\n{example}"
         
@@ -119,8 +118,6 @@ def handle_modify_input(event, text):
             key = match.group(1).strip()
             value = match.group(2).strip()
             content[key] = value
-            print(match)
-        print(line)
     draft_id = content.get("Id")
     if not draft_id:
         line_bot_api.reply_message(
@@ -155,6 +152,140 @@ def handle_modify_input(event, text):
         text_reply("✅ 預約內容已更新，請確認後再進行新增或其他操作。")
     )
 
+def handle_modify_input(event, text):
+    from services.reservation_draft import get_draft, update_draft
+
+    lines = text.strip().split("\n")
+    content = {}
+
+    for line in lines:
+        line = line.strip()
+        # 支援格式：key [任意空格] [: 或 ： 或 空格] [任意空格] value
+        match = re.match(r"^(.*?)\s*[:：]?\s+(.*)$", line)
+        if match:
+            key = match.group(1).strip()
+            value = match.group(2).strip()
+            content[key] = value
+
+    draft_id = content.get("Id")
+    if not draft_id:
+        line_bot_api.reply_message(
+            event.reply_token,
+            text_reply("❌ 未提供草稿 ID，請確認格式為 `Id: xxx` 或 `Id xxx`。")
+        )
+        return
+
+    draft = get_draft(draft_id)
+    if not draft:
+        line_bot_api.reply_message(
+            event.reply_token,
+            text_reply(f"找不到對應的預約草稿，請確認 ID 是否正確。\n（嘗試 ID: {draft_id}）")
+        )
+        return
+
+    # 更新欄位
+    draft["name"] = content.get("姓名", draft.get("name", ""))
+    draft["date"] = content.get("日期", draft.get("date", ""))
+    draft["start_time"] = content.get("時間", draft.get("start_time", ""))
+    draft["tel"] = content.get("電話", draft.get("tel", ""))
+    draft["memo"] = content.get("備註", draft.get("memo", ""))
+    draft["branch"] = content.get("分店", draft.get("memo", ""))
+
+    user_id = draft["user_id"]
+    draft.pop("draft_id", None)  # 移除多餘欄位
+    update_draft(draft_id=draft_id, **draft)
+    finalize_and_save_modify(user_id, draft)
+
+    line_bot_api.reply_message(
+        event.reply_token,
+        text_reply("✅ 預約內容已更新，請確認後再進行新增或其他操作。")
+    )
+    
+def modify_reservation(event, uid):
+    try:
+        # 取得預約資料
+        reservation = get_reservation(uid)
+        
+        if not reservation:
+            reply_text = "⚠️ 找不到該預約，可能已被刪除或不存在"
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
+            return
+        
+        name = reservation.get("name", "")
+        date = reservation.get("date", "")
+        time = reservation.get("start_time", "")
+        tel = reservation.get("tel", "")
+        memo = reservation.get("memo", "")
+        branch = reservation.get("branch", "")
+        uid = reservation.get("uid", "")
+        
+        tip = "更改預約，請直接複製以下範例並再傳回更改後內容："
+        example = f"姓名 {name}\n日期 {date}\n時間 {time}\n電話 {tel}\n備註 {memo}\n分店 {branch}\nuid {uid}"
+        reply_text = f"{tip}\n{example}"
+        # 產生確認刪除用的 Flex message
+        flex_json = build_delete_reservation_flex(reservation)
+
+        # 用 reply 傳送 Flex Message，請用戶確認
+        line_bot_api.reply_message(
+            event.reply_token,
+            FlexSendMessage(alt_text="請確認是否刪除預約", contents=flex_json)
+        )
+    
+    except Exception as e:
+        print(f"handle_reservation_delete 發生錯誤: {e}")
+        reply_text = f"⚠️ 發生錯誤，請稍後再試。錯誤訊息：{e}"
+        reply_with_error(event, reply_text)
+
+# def handle_modify_input_for_reservation(event, text):
+
+
+#     lines = text.strip().split("\n")
+#     content = {}
+
+#     for line in lines:
+#         line = line.strip()
+#         # 支援格式：key [任意空格] [: 或 ： 或 空格] [任意空格] value
+#         match = re.match(r"^(.*?)\s*[:：]?\s+(.*)$", line)
+#         if match:
+#             key = match.group(1).strip()
+#             value = match.group(2).strip()
+#             content[key] = value
+
+
+        
+#     uid = content.get("uid")
+#     if not uid:
+#         line_bot_api.reply_message(
+#             event.reply_token,
+#             text_reply("❌ 未提供草稿 ID，請確認格式為 `Id: xxx` 或 `Id xxx`。")
+#         )
+#         return
+
+#     reservation = get_reservation(uid)
+#     if not reservation:
+#         line_bot_api.reply_message(
+#             event.reply_token,
+#             text_reply(f"找不到對應的預約草稿，請確認 ID 是否正確。\n（嘗試 ID: {uid}）")
+#         )
+#         return
+
+#     # 更新欄位
+#     reservation["name"] = content.get("姓名", uid.get("name", ""))
+#     reservation["date"] = content.get("日期", uid.get("date", ""))
+#     reservation["start_time"] = content.get("時間", uid.get("start_time", ""))
+#     reservation["tel"] = content.get("電話", uid.get("tel", ""))
+#     reservation["memo"] = content.get("備註", uid.get("memo", ""))
+#     reservation["branch"] = content.get("分店", uid.get("memo", ""))
+
+#     user_id = uid["user_id"]
+#     # reservation.pop("draft_id", None)  # 移除多餘欄位
+#     update_draft(uid, **reservation)
+#     finalize_and_save_modify(user_id, draft)
+
+#     line_bot_api.reply_message(
+#         event.reply_token,
+#         text_reply("✅ 預約內容已更新，請確認後再進行新增或其他操作。")
+#     )
 def handle_request_delete(event, draft_id):
     # 根據 draft_id 取得 draft 資料
     draft = get_draft(draft_id)
@@ -168,23 +299,36 @@ def handle_request_delete(event, draft_id):
         FlexSendMessage(alt_text="請確認是否刪除預約", contents=flex_json)
     )
 
-def handle_delete(event, draft_id):
+def handle_delete(event, draft_id):              ## 有bug draft 要刪掉
     # 這才是實際刪除動作
     from services.reservation_draft import delete_draft
 
-    draft = get_draft(draft_id)
+    draft = {
+        "name": "林師傅",
+        "tel": "0912123123",
+        "date": "2025/06/07",
+        "start_time": "17:00:00",
+        "branch": "武鬥大會",
+        "memo": "準備好場地",
+        "user_id": "Udde0785b1f349c98d4c2b9b727d32ac1",
+        "confirmed": False,
+        "draft_id": "Udde0785b1f349c98d4c2b9b727d32ac1_2025-06-07_17-00-00"
+    }
+     
+    
+    print(f'現在的draftid:{draft}\n{draft_id}')
     user_id = draft["user_id"]
     try:
         delete_draft(draft_id)
         reply_text = "🗑 訂單已取消"
     except Exception as e:
         reply_text = f"⚠️ 取消訂單失敗：{e}"
-
     # 推播取消通知給用戶
     flex_content   = notify_reservation_being_delete(draft, 0)
     if isinstance(flex_content, str):
         flex_content = json.loads(flex_content)
-    message = FlexSendMessage(alt_text="預約已修改", contents=flex_content)
+    message = notify_reservation_being_delete(draft, 0) ### 要修
+    
     line_bot_api.push_message(user_id, message)
 
     # 回覆用戶刪除結果

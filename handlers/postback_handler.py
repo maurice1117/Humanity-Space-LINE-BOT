@@ -1,4 +1,4 @@
-from linebot.models import FlexSendMessage
+from linebot.models import FlexSendMessage, TextSendMessage
 from services.reservation_draft import get_draft
 from .host_command_handlers import handle_confirm_add, handle_modify, handle_delete, reply_with_error, handle_request_delete, handle_delete_reservation
 from services.response_builder import build_branch_selection_flex, build_delete_confirm_flex, build_delete_reservation_flex
@@ -50,10 +50,9 @@ def handle_postback(event):
 
     elif action == "delete":
         handle_request_delete(event, draft_id)
-        if action == "confirm_delete":
-            # 用戶點確定，執行真正刪除
+    elif action == "confirm_delete":
             handle_delete(event, draft_id)
-    elif action == "confirm_delete" and uid:
+    elif action == "confirm_delete_Reservation" and uid:
         handle_delete_reservation(event, uid)
 
     else:

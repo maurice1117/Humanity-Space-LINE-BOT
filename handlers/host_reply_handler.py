@@ -12,7 +12,7 @@ from services.llm_service import extract_reservation_info
 # from handlers.audio_handler import handle_audio
 from handlers.text_handler import handle_text
 from handlers.host_command_handlers import (handle_confirm_add, handle_modify, handle_delete, handle_unknown_command, handle_query_by_date, handle_query_by_name, handle_query_for_today
-                                   , handle_query_for_tomorrow, reply_with_error, handle_modify_input, handle_delete_reservation, handle_reservation_delete_confirm)
+                                   , handle_query_for_tomorrow, reply_with_error, handle_modify_input, handle_delete_reservation, handle_reservation_delete_confirm, modify_reservation)
 # linebot
 from linebot import LineBotApi
 from linebot.models import AudioMessage, TextMessage
@@ -66,8 +66,10 @@ def get_event_text(event):
 # 指令與對應的處理函數，標記是否需要帶入text
 COMMAND_HANDLERS = {
     "確認新增": (handle_confirm_add, True),
-    "請直接複製以下範例並再傳回更改後內容": (handle_modify_input, True),
+    "更改預約草稿，請直接複製以下範例並再傳回更改後內容：": (handle_modify_input, True),
     "刪除該次預約": (handle_delete, False),
+    "修改預約": (modify_reservation, True),
+    "更改預約，請直接複製以下範例並再傳回更改後內容：": (handle_modify_input_for_reservation, True),
     "刪除預約": (handle_reservation_delete_confirm, True),
     "查詢本日預約": (handle_query_for_today, False),
     "查詢今日預約": (handle_query_for_today, False),
@@ -76,5 +78,4 @@ COMMAND_HANDLERS = {
     "查詢明天預約": (handle_query_for_tomorrow, False),
     "查詢預約": (handle_query_by_date, True),
     "查詢客人": (handle_query_by_name, True),
-    
 }
