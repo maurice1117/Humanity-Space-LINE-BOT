@@ -12,7 +12,7 @@ from services.llm_service import extract_reservation_info
 # from handlers.audio_handler import handle_audio
 from handlers.text_handler import handle_text
 from handlers.host_command_handlers import (handle_confirm_add, handle_modify, handle_delete, handle_unknown_command, handle_query_by_date, handle_query_by_name, handle_query_for_today
-                                   , handle_query_for_tomorrow, reply_with_error, handle_modify_input, handle_delete_reservation, handle_reservation_delete_confirm, modify_reservation)
+                                   , handle_query_for_tomorrow, reply_with_error, handle_modify_input, handle_delete_reservation, handle_reservation_delete_confirm, modify_reservation, handle_modify_input_for_reservation)
 # linebot
 from linebot import LineBotApi
 from linebot.models import AudioMessage, TextMessage

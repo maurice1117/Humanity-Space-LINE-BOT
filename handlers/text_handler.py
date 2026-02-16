@@ -1,7 +1,7 @@
 # text_handler.py
 from services.llm_service import is_reservation_request, extract_reservation_info
 from services.reservation_draft import save_draft, save_text_draft
-from services.notify_host import notify_host_reservation
+from services.notify_admin import notify_host_reservation
 from services.response_builder import text_reply
 from services.reservation_flow import finalize_and_save
 from linebot import LineBotApi
