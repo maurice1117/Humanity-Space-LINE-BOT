@@ -236,56 +236,57 @@ def modify_reservation(event, uid):
         reply_text = f"⚠️ 發生錯誤，請稍後再試。錯誤訊息：{e}"
         reply_with_error(event, reply_text)
 
-# def handle_modify_input_for_reservation(event, text):
+def handle_modify_input_for_reservation(event, text):
 
 
-#     lines = text.strip().split("\n")
-#     content = {}
+    lines = text.strip().split("\n")
+    content = {}
 
-#     for line in lines:
-#         line = line.strip()
-#         # 支援格式：key [任意空格] [: 或 ： 或 空格] [任意空格] value
-#         match = re.match(r"^(.*?)\s*[:：]?\s+(.*)$", line)
-#         if match:
-#             key = match.group(1).strip()
-#             value = match.group(2).strip()
-#             content[key] = value
+    for line in lines:
+        line = line.strip()
+        # 支援格式：key [任意空格] [: 或 ： 或 空格] [任意空格] value
+        match = re.match(r"^(.*?)\s*[:：]?\s+(.*)$", line)
+        if match:
+            key = match.group(1).strip()
+            value = match.group(2).strip()
+            content[key] = value
 
 
         
-#     uid = content.get("uid")
-#     if not uid:
-#         line_bot_api.reply_message(
-#             event.reply_token,
-#             text_reply("❌ 未提供草稿 ID，請確認格式為 `Id: xxx` 或 `Id xxx`。")
-#         )
-#         return
+    uid = content.get("uid")
+    if not uid:
+        line_bot_api.reply_message(
+            event.reply_token,
+            text_reply("❌ 未提供草稿 ID，請確認格式為 `Id: xxx` 或 `Id xxx`。")
+        )
+        return
 
-#     reservation = get_reservation(uid)
-#     if not reservation:
-#         line_bot_api.reply_message(
-#             event.reply_token,
-#             text_reply(f"找不到對應的預約草稿，請確認 ID 是否正確。\n（嘗試 ID: {uid}）")
-#         )
-#         return
+    reservation = get_reservation(uid)
+    if not reservation:
+        line_bot_api.reply_message(
+            event.reply_token,
+            text_reply(f"找不到對應的預約草稿，請確認 ID 是否正確。\n（嘗試 ID: {uid}）")
+        )
+        return
 
-#     # 更新欄位
-#     reservation["name"] = content.get("姓名", uid.get("name", ""))
-#     reservation["date"] = content.get("日期", uid.get("date", ""))
-#     reservation["start_time"] = content.get("時間", uid.get("start_time", ""))
-#     reservation["tel"] = content.get("電話", uid.get("tel", ""))
-#     reservation["memo"] = content.get("備註", uid.get("memo", ""))
-#     reservation["branch"] = content.get("分店", uid.get("memo", ""))
+    # 更新欄位
+    reservation["name"] = content.get("姓名", uid.get("name", ""))
+    reservation["date"] = content.get("日期", uid.get("date", ""))
+    reservation["start_time"] = content.get("時間", uid.get("start_time", ""))
+    reservation["tel"] = content.get("電話", uid.get("tel", ""))
+    reservation["memo"] = content.get("備註", uid.get("memo", ""))
+    reservation["branch"] = content.get("分店", uid.get("memo", ""))
 
-#     user_id = uid["user_id"]
-#     # reservation.pop("draft_id", None)  # 移除多餘欄位
-#     update_draft(uid, **reservation)
-#     finalize_and_save_modify(user_id, draft)
+    user_id = uid["user_id"]
+    # reservation.pop("draft_id", None)  # 移除多餘欄位
+    update_draft(uid, **reservation)
+    finalize_and_save_modify(user_id, reservation)
 
-#     line_bot_api.reply_message(
-#         event.reply_token,
-#         text_reply("✅ 預約內容已更新，請確認後再進行新增或其他操作。")
-#     )
+    line_bot_api.reply_message(
+        event.reply_token,
+        text_reply("✅ 預約內容已更新，請確認後再進行新增或其他操作。")
+    )
+
 def handle_request_delete(event, draft_id):
     # 根據 draft_id 取得 draft 資料
     draft = get_draft(draft_id)
